@@ -4,7 +4,7 @@ Arduino - Small microcontroller that is used to control the robot. Two are used
 in the current system: a Controller that connects to the Computer, which then
 relays data to and from the Rover Arduino.
 
-Bot - See Rover
+Bot - See Rover.
 
 Computer - The computer (not Arduino) that is connected to the Controller
 Arduino and performs most of the processing. Also acts as the Operator Interface
@@ -21,7 +21,7 @@ that familiar with MATLAB). It also differs from languages like Java or C in
 that it consists of functions rather than sequential lines of code. All the
 idiosyncrasies will probably have to be explained in a separate document.
 
-OI - See Operator Interface
+OI - See Operator Interface.
 
 Operator Interface - The way the driver interacts with the Rover. Generally
 consists of both physical (joysticks) and virtual (_virtual_ joysticks)
