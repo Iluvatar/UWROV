@@ -1,0 +1,63 @@
+The programs here are still in pre-alpha testing, so they might be a little
+buggy or not entirely reliable. Specifically, the Mathematica program has a few
+issues that still need to be worked out. This document covers the use of the
+Mathematica Drive code.
+
+To Run
+------
+Open the notebook and click "Enable Dynamic" if it asks. Then, click
+Evaluation > Evaluate Notebook. Evaluate cells individually by pressing
+shift-enter when the cursor is in them. There should be one cell visible, the
+initialization cell. Before you run the program, change the USBPortName to
+whatever the name of the port is that the controller Arduino is plugged into.
+
+Below the UI, there should be three lines that say:
+    
+    Null
+    {-256, -256, -256}
+    Null
+    
+Those values will change when the program is running, but the must be visible on
+the screen. This is because of the way Mathematica updates values, and it will
+be changed later to be more robust. If they are not, then the sensor values and
+motor values may not be updated properly.
+
+To connect to the rover, simply click the "Connect" button. If all goes well, it
+should change to "Disconnect" and the values should start changing. If it says
+"Error, try again" or nothing happens, see Troubleshooting below.
+
+The three joysticks from left to right control transational motion (top down
+view), rotation, and elevation. Right now, only one can be controlled at a time.
+The circle to the right shows a top down view of the (theoretical) translational
+motion of the rover. The black arrow is where the joystick is pointing and the
+red arrow is where the rover should be moving.
+
+The tare buttons set the default value of the sensor values to their current
+values, so that their current values are 0. Because of this, the range of sensor
+values is -255 - 255. "Reset Tares" resets the calibration to the default.
+
+Reference
+---------
+How to see the source - The source is currently in hidden cells. To see it,
+select the cells (the blue things on the far right of the notebook), or just
+click Edit > Select All. Then, select Cell > Cell Properties > Open.
+
+Troubleshooting
+---------------
+The program doesn't connect.
+Make sure you changed the USBPortName to the correct name and that the Arduino
+is plugged in. If that doesn't work, try typing "<< SerialIO`" into a separate
+notebook and pressing shift-enter. Finally, you can try quitting Mathematica (or
+just the kernel, by going to Evaluation > Quit Kernel > Local) and unplugging
+the Arduino, and starting again.
+
+The sensor/motor values aren't updating.
+Make sure that you are connected to the Arduino and that the three lines below
+the UI are visible on the screen. Also make sure that the sensors and motors
+are plugged into the right ports on the rover (see DriveBot/DriveBot.ino).
+
+I messed something up and now everything's breaking and oh god the blood-
+As a last resort, try again from the start. Quit Mathematica, unplug the
+Arduinos, and reinstall their code (make sure to unplug wires going to the RX
+port). Hopefully you haven't broken anything too badly. The latest code is also
+available from github.com/Iluvatar/UWROV.

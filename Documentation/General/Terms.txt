@@ -1,0 +1,32 @@
+Terms
+-----
+Arduino - Small microcontroller that is used to control the robot. Two are used
+in the current system: a Controller that connects to the Computer, which then
+relays data to and from the Rover Arduino.
+
+Bot - See Rover
+
+Computer - The computer (not Arduino) that is connected to the Controller
+Arduino and performs most of the processing. Also acts as the Operator Interface
+for the Rover.
+
+Controller - The Arduino that acts as an intermediary between the Computer and
+the Rover Arduino. Receives motor information from the Computer and sensor data
+from the Rover.
+
+Mathematica - The application currently used to connect to the Arduinos from the
+Computer. It may be somewhat compared to MATLAB in that it is a text-based
+interface used for doing math and has its own language and syntax (I am not
+that familiar with MATLAB). It also differs from languages like Java or C in
+that it consists of functions rather than sequential lines of code. All the
+idiosyncrasies will probably have to be explained in a separate document.
+
+OI - See Operator Interface
+
+Operator Interface - The way the driver interacts with the Rover. Generally
+consists of both physical (joysticks) and virtual (_virtual_ joysticks)
+compenents.
+
+Rover - Either the actual robot that goes exploring, or the Arduino that
+controls it. The Arduino receives motor information from the Controller and
+sends back sensor readings.
