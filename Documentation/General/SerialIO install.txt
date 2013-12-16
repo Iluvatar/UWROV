@@ -1,5 +1,5 @@
 Installing on Mac OS X
-----------------------------
+----------------------
 The best instructions for installation can be found here:
 
 williamjturkel.net/2011/12/25/connecting-arduino-to-mathematica-on-mac-os-x-with-serialio
@@ -15,7 +15,7 @@ If you encounter errors, make sure you have the correct file path listed in init
 that you actually replaced 'username' with your username in all the file paths.
 
 Installing on Windows
-------------------------------
+---------------------
 Installing on Windows is fairly simple. Once the package is downloaded, extract it to
 C:\ProgramFiles\Mathematica\Applications. Yep. That's it.
 
