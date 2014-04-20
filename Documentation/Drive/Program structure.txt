@@ -1,0 +1,12 @@
+Files with the .nb extension are run in Mathematica. Files with the .ino extension are loaded to the
+Ardiunos.
+
+Debug.nb - Used for debugging purposes. Allows individual control over motor speed and direction.
+
+DriveControl.nb - Main UI for driving.
+
+DriveBot.ino - Program that runs on the ROV Arduino. Interprets motor speed and direction data and
+sends back sensor information.
+
+DriveControl.ino - Program that runs on the intermediate Arduino between the computer and ROV.
+Relays motor data to the ROV and sensor data to the computer.
