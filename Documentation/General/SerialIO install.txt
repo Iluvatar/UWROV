@@ -1,3 +1,5 @@
+SerialIO download: http://library.wolfram.com/infocenter/Demos/5726/
+
 Installing on Mac OS X
 ----------------------
 The best instructions for installation can be found here:
