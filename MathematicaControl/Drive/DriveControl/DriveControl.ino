@@ -1,3 +1,5 @@
+// Used on the intermediate Ardiuno to connect to the computer and ROV.
+
 // Motor layout, top view. Motors 1 and 2 point towards the back. Motors 3 and 4
 // point towards the front. Motors 5 and 6 point up.
 // 
