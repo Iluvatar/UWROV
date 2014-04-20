@@ -14,10 +14,7 @@
 
 #include <SoftwareSerial.h>
 
-// the delay between updates
-#define REFRESH_RATE 100
-
-// ports for Serial2
+// ports for SerialAlt
 #define RX_PORT 10
 #define TX_PORT 11
 
@@ -31,11 +28,17 @@
 // The total number of sensors the robot knows about.
 #define NUM_SENSORS 3
 
+// The total number of sensors on this Arduino
+#define NUM_LOC_SENSORS 1
+
+// used for periodic tasks that aren't executed every loop
+int time = 0;
+
 /**
- * Class that represents a motor. Each motor has a current power and direction.
- * Motors also have an ID that matches them to their physical position on the
- * robot, and a header that is used to send its data through serial
- * communication.
+ * Class that represents a motor. Each motor has a current power (which is
+ * negative for backward motion). Motors also have an ID that matches them to
+ * their physical position on the robot, and a header that is used to send its
+ * data through serial communication.
  */
 class Motor {
 public:
@@ -48,7 +51,6 @@ public:
     Motor(int ID, char powerHeader, char dirHeader):
     ID(ID), powerHeader(powerHeader), dirHeader(dirHeader) {
         power = 0;
-        dir = FORWARD;
     }
 };
 
@@ -67,15 +69,30 @@ public:
     }
 };
 
+class LocalSensor {
+public:
+    int value;
+    String name;
+    char header;
+    int port;
+    
+    LocalSensor(int port, String name, char header):
+    port(port), name(name), header(header) {
+        value = 0;
+    }
+};
+
 // Contains all the Motors on the robot.
 Motor* motors[NUM_MOTORS];
 
 // Contains all the Sensors on the robot.
 Sensor* sensors[NUM_SENSORS];
 
-// connects to the other arduino
-SoftwareSerial Serial2(RX_PORT, TX_PORT);
+// Contains all the sensors on this Arduino.
+LocalSensor* localSensors[NUM_LOC_SENSORS];
 
+// connects to the other arduino
+SoftwareSerial SerialAlt(RX_PORT, TX_PORT);
 
 /**
  * Initializes all the motors and sensors with the right ports and other data.
@@ -91,24 +108,46 @@ void initialize() {
     sensors[0] = new Sensor("Pressure", 'P');
     sensors[1] = new Sensor("Humidity", 'H');
     sensors[2] = new Sensor("Temperature", 'T');
+    
+    localSensors[0] = new LocalSensor(A0, "Current", 'C');
 }
 
 void setup() {
+    
     Serial.begin(9600);
-    Serial2.begin(9600);
+    SerialAlt.begin(9600);
+        pinMode(5, OUTPUT); // REMOVE
+        pinMode(6, OUTPUT); // REMOVE
         pinMode(13, OUTPUT); // REMOVE
-        digitalWrite(13, LOW); // REMOVE
+        digitalWrite(13, HIGH); // REMOVE
     
     // initializes motor and sensor values
     initialize();
 }
 
 void loop() {
-    readInputValues();
-    writeMotorValues();
-    writeSensorValues();
+    // true if there is enough data for values to be extracted
+    boolean newMotorVals = false;
     
-    delay(REFRESH_RATE);
+    // wait for enough data to arrive
+    do {
+        newMotorVals = Serial.available() >= 3;
+        
+        if (time % 10 == 0) {
+            // always write sensors values, as some sensors are on this Arduino
+            writeSensorValues();
+        }
+        
+        time++;
+        delay(10);
+    } while (!newMotorVals);
+    
+    readInputValues();
+    
+    // only write new motor value if they were updated
+    if (newMotorVals) {
+        writeMotorValues();
+    }
 }
 
 /**
@@ -122,34 +161,43 @@ void loop() {
  */
 void readInputValues() {
     // read motor values from the computer
-    while (Serial.available()) {
+    while (Serial.available() >= 3) {
         int value = Serial.read();
         
         // motor readings
         // valid prefixes are 1-6
         if (value >= '1' && value <= '6') {
-            motors[value - '1']->power = Serial.read();
+            int in1 = Serial.read();
+            int in2 = Serial.read();
+            if (in1 == in2) {
+                motors[value - '1']->power = in1;
+                //motors[value - '1']->power = 254;
+            }
         }
         
         // motor direction readings
         // valid headers are a-f, corresponding to motors 1-6
         if (value >= 'a' && value <= 'f') {
-            motors[value - 'a']->dir = Serial.read() == '0' ? BACKWARD : FORWARD;
+            int in1 = Serial.read();
+            int in2 = Serial.read();
+            if (in1 == in2) {
+                motors[value - 'a']->dir = in1 == '0' ? BACKWARD : FORWARD;
+            }
         }
     }
     
     // read sensor values from the rover
-    while (Serial2.available()) {
-        int value = Serial2.read();
+    while (SerialAlt.available() >= 2) {
+        int value = SerialAlt.read();
         
         // TODO make more elegant
         // sensor readings
         if (value == 'P') {
-            sensors[0]->value = Serial2.read();
+            sensors[0]->value = SerialAlt.read();
         } else if (value == 'H') {
-            sensors[1]->value = Serial2.read();
+            sensors[1]->value = SerialAlt.read();
         } else if (value == 'T') {
-            sensors[2]->value = Serial2.read();
+            sensors[2]->value = SerialAlt.read();
         }
     }
 }
@@ -160,11 +208,13 @@ void readInputValues() {
  */
 void writeMotorValues() {
     for (int i = 0; i < NUM_MOTORS; i++) {
-        Serial2.write(motors[i]->powerHeader);
-        Serial2.write(motors[i]->power);
+        SerialAlt.write(motors[i]->powerHeader);
+        SerialAlt.write(motors[i]->power);
+        SerialAlt.write(motors[i]->power);
         
-        Serial2.write(motors[i]->dirHeader);
-        Serial2.write(motors[i]->dir);
+        SerialAlt.write(motors[i]->dirHeader);
+        SerialAlt.write(motors[i]->dir);
+        SerialAlt.write(motors[i]->dir);
     }
 }
 
@@ -176,5 +226,13 @@ void writeSensorValues() {
     for (int i = 0; i < NUM_SENSORS; i++) {
         Serial.write(sensors[i]->header);
         Serial.write(sensors[i]->value);
+    }
+    
+    for (int i = 0; i < NUM_LOC_SENSORS; i++) {
+        Serial.write(localSensors[i]->header);
+        
+        // Values are divided by 4 to fit in a byte (the range of analogRead is
+        // 0-1023; analogWrite is 0-255).
+        Serial.write(analogRead(localSensors[i]->port) / 4);
     }
 }
