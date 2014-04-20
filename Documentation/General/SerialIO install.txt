@@ -1,10 +1,10 @@
-SerialIO download: http://library.wolfram.com/infocenter/Demos/5726/
+SerialIO download: library.wolfram.com/infocenter/Demos/5726/
 
 Installing on Mac OS X
 ----------------------
 The best instructions for installation can be found here:
 
-williamjturkel.net/2011/12/25/connecting-arduino-to-mathematica-on-mac-os-x-with-serialio
+williamjturkel.net/2011/12/25/connecting-arduino-to-mathematica-on-mac-os-x-with-serialio/
 
 You don't have to install the Arduino program itself, though you may want to do something similar
 for testing purposes. You also don't have to actually close the Arduino IDE, but make sure that the
