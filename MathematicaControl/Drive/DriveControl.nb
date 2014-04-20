@@ -1,0 +1,937 @@
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[         0,          0]
+NotebookDataLength[     37338,        936]
+NotebookOptionsPosition[     36355,        897]
+NotebookOutlinePosition[     36710,        913]
+CellTagsIndexPosition[     36667,        910]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell["\<\
+Motor layout, top view. Motors 1 and 2 point towards the back. Motors 3 and 4
+point towards the front. Motors 5 and 6 point up.
+
+     Front
+ 1           2
+  /---------\\
+ /|         |\\
+  |    5    |
+  |         |
+  |    6    |
+ \\|         |/
+  \\---------/
+ 4          3\
+\>", "Text",
+ CellOpen->False,
+ CellChangeTimes->{{3.596083973047641*^9, 3.596084040166119*^9}, {
+  3.596084106535845*^9, 3.5960841197440987`*^9}, {3.596087034657288*^9, 
+  3.596087075869314*^9}, {3.596097481455023*^9, 3.596097482493369*^9}},
+ FontFamily->"Courier"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", "Initialization", " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "You", " ", "will", " ", "have", " ", "to", " ", "change", " ", 
+    "USBPortName", " ", "to", " ", "whatever", " ", "port", " ", "name", " ", 
+    "the", " ", "controller", " ", "is", " ", "plugged", " ", 
+    RowBox[{"into", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"ResetValues", "[", "]"}], ":=", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"pressure", "=", 
+       RowBox[{"-", "256"}]}], ";", 
+      RowBox[{"humidity", "=", 
+       RowBox[{"-", "256"}]}], ";", 
+      RowBox[{"temperature", "=", 
+       RowBox[{"-", "256"}]}], ";", 
+      RowBox[{"current", "=", 
+       RowBox[{"-", "256"}]}], ";", 
+      RowBox[{"pressureTare", "=", "0"}], ";", 
+      RowBox[{"humidityTare", "=", "0"}], ";", 
+      RowBox[{"temperatureTare", "=", "0"}], ";", 
+      RowBox[{"currentTare", "=", " ", "0"}], ";", 
+      RowBox[{"input", "=", "\"\<\>\""}], ";"}], ")"}]}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"<<", "SerialIO`"}], ";", 
+    RowBox[{"buttonMessage", "=", "\"\<Connect\>\""}], ";", 
+    RowBox[{"refresh", "=", "False"}], ";", 
+    RowBox[{"USBPortName", "=", "\"\</dev/tty.usbmodem641\>\""}], ";", 
+    RowBox[{"ResetValues", "[", "]"}], ";"}]}]}]], "Input",
+ CellChangeTimes->{{3.5957312966679068`*^9, 3.5957313074269953`*^9}, 
+   3.596076908787994*^9, {3.596077231805501*^9, 3.5960772461076727`*^9}, {
+   3.596078445259172*^9, 3.596078445553772*^9}, {3.596078581496068*^9, 
+   3.59607860010258*^9}, {3.596079226211667*^9, 3.596079232294991*^9}, {
+   3.596085072337852*^9, 3.5960850777235937`*^9}, {3.596086636478436*^9, 
+   3.5960866366744957`*^9}, {3.5960879433040457`*^9, 3.596087945256638*^9}, {
+   3.596089805833681*^9, 3.596089814490279*^9}, {3.596089945998919*^9, 
+   3.596089969007929*^9}, {3.596098794790366*^9, 3.596098880148243*^9}, {
+   3.59609895112176*^9, 3.596098981799378*^9}, {3.596101469285161*^9, 
+   3.596101506216495*^9}, {3.596106062451651*^9, 3.5961060642666616`*^9}, 
+   3.596141592084228*^9, {3.5990124967405767`*^9, 3.599012497037023*^9}, {
+   3.5999509311266317`*^9, 3.599950933347471*^9}, {3.602542040240068*^9, 
+   3.602542075847447*^9}, 3.602784432508593*^9},
+ Background->GrayLevel[0.85]],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Calculating", " ", "motor", " ", "speed", " ", 
+    RowBox[{"(", 
+     RowBox[{
+     "assuming", " ", "45", " ", "degree", " ", "angled", " ", "motors"}], 
+     ")"}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Raw", " ", "motor", " ", "speeds", " ", "go", " ", "from"}], 
+     " ", "-", 
+     RowBox[{
+     "1", " ", "to", " ", "1.", " ", "Final", " ", "speeds", " ", "go", " ", 
+      "from", " ", "0", " ", "to", " ", "255.", " ", "Direction", " ", "is", 
+      " ", "either", " ", "1"}]}], ",", " ", 
+    RowBox[{"-", "1"}], ",", " ", 
+    RowBox[{"or", " ", "0."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{"Get45AngleSpeed", "[", 
+      RowBox[{"joyx_", ",", "joyy_"}], "]"}], ":=", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Sign", "[", "joyx", "]"}], "\[Equal]", 
+        RowBox[{"Sign", "[", "joyy", "]"}]}], ",", 
+       RowBox[{
+        RowBox[{"Norm", "[", 
+         RowBox[{"{", 
+          RowBox[{"joyx", ",", "joyy"}], "}"}], "]"}], "*", 
+        RowBox[{"Sign", "[", "joyx", "]"}]}], ",", 
+       RowBox[{
+        RowBox[{"Norm", "[", 
+         RowBox[{"{", 
+          RowBox[{"joyx", ",", "joyy"}], "}"}], "]"}], "*", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"ArcTan", "[", 
+           RowBox[{
+            RowBox[{"-", "joyx"}], "/", "joyy"}], "]"}], "-", 
+          RowBox[{"Pi", "/", "4"}]}], ")"}], "*", 
+        RowBox[{"4", "/", "Pi"}], "*", 
+        RowBox[{"Sign", "[", "joyx", "]"}]}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"GetTranslationSpeed", "[", "motor_Integer", "]"}], ":=", 
+     RowBox[{"Which", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"motor", "\[Equal]", "1"}], "||", 
+        RowBox[{"motor", "\[Equal]", "3"}]}], ",", 
+       RowBox[{"Get45AngleSpeed", "[", 
+        RowBox[{
+         RowBox[{"joy", "[", 
+          RowBox[{"[", "1", "]"}], "]"}], ",", 
+         RowBox[{"joy", "[", 
+          RowBox[{"[", "2", "]"}], "]"}]}], "]"}], ",", 
+       RowBox[{
+        RowBox[{"motor", "\[Equal]", "2"}], "||", 
+        RowBox[{"motor", "\[Equal]", "4"}]}], ",", 
+       RowBox[{"Get45AngleSpeed", "[", 
+        RowBox[{
+         RowBox[{"-", 
+          RowBox[{"joy", "[", 
+           RowBox[{"[", "1", "]"}], "]"}]}], ",", 
+         RowBox[{"joy", "[", 
+          RowBox[{"[", "2", "]"}], "]"}]}], "]"}], ",", 
+       RowBox[{
+        RowBox[{"motor", "\[Equal]", "5"}], "||", 
+        RowBox[{"motor", "\[Equal]", "6"}]}], ",", "rise"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"GetRotationSpeed", "[", "motor_Integer", "]"}], ":=", 
+     RowBox[{"Which", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"motor", "\[Equal]", "1"}], "||", 
+        RowBox[{"motor", "\[Equal]", "4"}]}], ",", "turn", ",", 
+       RowBox[{
+        RowBox[{"motor", "\[Equal]", "2"}], "||", 
+        RowBox[{"motor", "\[Equal]", "3"}]}], ",", 
+       RowBox[{"-", "turn"}], ",", 
+       RowBox[{
+        RowBox[{"motor", "\[Equal]", "5"}], "||", 
+        RowBox[{"motor", "\[Equal]", "6"}]}], ",", "0"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"RawMotorSpeed", "[", "motor_Integer", "]"}], ":=", 
+     RowBox[{
+      RowBox[{"GetTranslationSpeed", "[", "motor", "]"}], "+", 
+      RowBox[{"GetRotationSpeed", "[", "motor", "]"}]}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"MotorSpeed", "[", "motor_Integer", "]"}], ":=", 
+     RowBox[{"Round", "[", 
+      RowBox[{"Min", "[", 
+       RowBox[{
+        RowBox[{"Abs", "[", 
+         RowBox[{"255", "*", 
+          RowBox[{"RawMotorSpeed", "[", "motor", "]"}]}], "]"}], ",", "255"}],
+        "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"MotorDirection", "[", "motor_Integer", "]"}], ":=", 
+     RowBox[{"Sign", "[", 
+      RowBox[{"RawMotorSpeed", "[", "motor", "]"}], "]"}]}], 
+    ";"}]}]}]], "Input",
+ CellChangeTimes->{{3.595711993242794*^9, 3.595712009295937*^9}, {
+   3.596078852226777*^9, 3.596078852952757*^9}, {3.596079083385141*^9, 
+   3.596079147406313*^9}, {3.5960838241415663`*^9, 3.5960839693673143`*^9}, {
+   3.596086638387034*^9, 3.596086638620118*^9}, {3.596089505822016*^9, 
+   3.596089509682735*^9}, {3.5960925055068913`*^9, 3.596092531717177*^9}, {
+   3.596092626951041*^9, 3.5960926604916887`*^9}, {3.596096650086185*^9, 
+   3.596096651705638*^9}, {3.596097017448328*^9, 3.596097049003263*^9}, {
+   3.5960971156555157`*^9, 3.596097118877717*^9}, {3.5960973207580338`*^9, 
+   3.5960973976120872`*^9}, {3.596097866913455*^9, 3.596097999541444*^9}, {
+   3.59952704912781*^9, 3.599527049489386*^9}, {3.5996785408131943`*^9, 
+   3.59967854111604*^9}, {3.5999506310447273`*^9, 3.599950680640862*^9}, {
+   3.599950772070191*^9, 3.5999508077396393`*^9}, {3.599950850110263*^9, 
+   3.599950865777131*^9}, {3.599954842157751*^9, 3.599954843846113*^9}, {
+   3.599955037569189*^9, 3.599955044126299*^9}, {3.5999550898351*^9, 
+   3.599955090223732*^9}, 3.599955121098784*^9, {3.599955165895073*^9, 
+   3.599955166196908*^9}, {3.5999552362527122`*^9, 3.5999552366097937`*^9}, {
+   3.599955385866856*^9, 3.5999553906320353`*^9}, 3.599955425970368*^9}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Formatting", " ", "and", " ", "parsing"}], " ", "*)"}], 
+  "\[IndentingNewLine]", "\t", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{
+    "Returns", " ", "the", " ", "byte", " ", "after", " ", "charCode", " ", 
+     "in", " ", "the", " ", "string", " ", "in_String"}], ",", " ", 
+    RowBox[{
+     RowBox[{"if", " ", "it", " ", 
+      RowBox[{"exists", ".", " ", "Otherwise"}], " ", "returns"}], " ", "-", 
+     "256."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{"readValue", "[", 
+      RowBox[{"in_String", ",", "charCode_String"}], "]"}], ":=", 
+     RowBox[{"Quiet", "[", 
+      RowBox[{"Check", "[", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"ToCharacterCode", "[", 
+          RowBox[{"StringTake", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"StringCases", "[", 
+              RowBox[{"in", ",", 
+               RowBox[{"charCode", "~~", "x_"}], ",", "1"}], "]"}], "[", 
+             RowBox[{"[", "1", "]"}], "]"}], ",", 
+            RowBox[{"{", "2", "}"}]}], "]"}], "]"}], "[", 
+         RowBox[{"[", "1", "]"}], "]"}], ",", 
+        RowBox[{"-", "256"}]}], "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", "\t", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+     RowBox[{
+     "Takes", " ", "an", " ", "integer", " ", "and", " ", "returns", " ", "a",
+       " ", "string", " ", "of", " ", "it", " ", "with", " ", "exactly", " ", 
+      "width", " ", 
+      RowBox[{"characters", ".", " ", "Truncates"}], " ", "or", " ", "pads", 
+      " ", 
+      RowBox[{
+       RowBox[{"with", " ", "'"}], "  ", "'"}], " ", "as", " ", 
+      RowBox[{"necessary", ".", " ", "Also"}]}], ",", " ", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"returns", " ", "'"}], "--"}], "-", 
+      RowBox[{
+      "'", " ", "if", " ", "the", " ", "input", " ", "value", " ", "is", " ", 
+       "invalid", " ", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"ie", " ", "less", " ", "than"}], " ", "-", "255"}], 
+        ")"}]}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"FormatReadings", "[", 
+      RowBox[{"n_Integer", ",", "width_Integer"}], "]"}], ":=", 
+     RowBox[{"StringJoin", "[", 
+      RowBox[{"PadLeft", "[", 
+       RowBox[{
+        RowBox[{"Characters", "[", 
+         RowBox[{"ToString", "[", 
+          RowBox[{"If", "[", 
+           RowBox[{
+            RowBox[{"n", "<", 
+             RowBox[{"-", "255"}]}], ",", "\"\<---\>\"", ",", "n"}], "]"}], 
+          "]"}], "]"}], ",", "width", ",", "\"\<  \>\""}], "]"}], "]"}]}], 
+    ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", "\t", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Returns", " ", "the", " ", "string", " ", "duplicated", " ", "and", " ", 
+     
+     RowBox[{"concatenated", ".", " ", "Used"}], " ", "for", " ", "sending", 
+     " ", "redundant", " ", 
+     RowBox[{"values", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Dup", "[", "dup_String", "]"}], ":=", 
+     RowBox[{"dup", "<>", "dup"}]}], ";"}], "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", "\t", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Creates", " ", "strings", " ", "to", " ", "send", " ", "to", " ", "the", 
+     " ", "Arduino", " ", "to", " ", "specify", " ", "motor", " ", "speed", 
+     " ", "and", " ", 
+     RowBox[{"direction", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"MotorPowerString", "[", "]"}], ":=", 
+     RowBox[{"\"\<1\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"FromCharacterCode", "[", 
+        RowBox[{"MotorSpeed", "[", "1", "]"}], "]"}], "]"}], "<>", 
+      "\"\<2\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"FromCharacterCode", "[", 
+        RowBox[{"MotorSpeed", "[", "2", "]"}], "]"}], "]"}], "<>", 
+      "\"\<3\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"FromCharacterCode", "[", 
+        RowBox[{"MotorSpeed", "[", "3", "]"}], "]"}], "]"}], "<>", 
+      "\"\<4\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"FromCharacterCode", "[", 
+        RowBox[{"MotorSpeed", "[", "4", "]"}], "]"}], "]"}], "<>", 
+      "\"\<5\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"FromCharacterCode", "[", 
+        RowBox[{"MotorSpeed", "[", "5", "]"}], "]"}], "]"}], "<>", 
+      "\"\<6\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"FromCharacterCode", "[", 
+        RowBox[{"MotorSpeed", "[", "6", "]"}], "]"}], "]"}]}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"MotorDirectionString", "[", "]"}], ":=", 
+     RowBox[{"\"\<a\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"DirString", "[", "1", "]"}], "]"}], "<>", "\"\<b\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"DirString", "[", "2", "]"}], "]"}], "<>", "\"\<c\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"DirString", "[", "3", "]"}], "]"}], "<>", "\"\<d\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"DirString", "[", "4", "]"}], "]"}], "<>", "\"\<e\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"DirString", "[", "5", "]"}], "]"}], "<>", "\"\<f\>\"", "<>", 
+      RowBox[{"Dup", "[", 
+       RowBox[{"DirString", "[", "6", "]"}], "]"}]}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"DirString", "[", "motor_Integer", "]"}], ":=", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"MotorDirection", "[", "motor", "]"}], "\[Equal]", 
+        RowBox[{"-", "1"}]}], ",", "\"\<0\>\"", ",", "\"\<1\>\""}], "]"}]}], 
+    ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"MotorString", "[", "]"}], ":=", 
+     RowBox[{
+      RowBox[{"MotorPowerString", "[", "]"}], "<>", 
+      RowBox[{"MotorDirectionString", "[", "]"}]}]}], ";"}]}]}]], "Input",
+ CellChangeTimes->{{3.596086362811709*^9, 3.59608638707404*^9}, {
+   3.596086465369681*^9, 3.596086690619635*^9}, {3.596086780106555*^9, 
+   3.596086814303656*^9}, {3.596087831941688*^9, 3.596087835393593*^9}, {
+   3.5960899264166594`*^9, 3.59608993603318*^9}, {3.596090795574511*^9, 
+   3.596090798227085*^9}, 3.596090828928899*^9, 3.596090872139627*^9, {
+   3.5960921473643627`*^9, 3.596092164819458*^9}, {3.596098635156151*^9, 
+   3.596098669220402*^9}, {3.596100017337015*^9, 3.596100061296132*^9}, {
+   3.5961001383526163`*^9, 3.596100215130245*^9}, {3.5996822453209143`*^9, 
+   3.599682257371584*^9}, {3.599682334924109*^9, 3.599682378197599*^9}, {
+   3.599682522054737*^9, 3.5996827008734827`*^9}, 3.5999549843562613`*^9, {
+   3.603311232725711*^9, 3.6033112331917057`*^9}},
+ Background->GrayLevel[0.85]],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", "GUI", " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"MainJoystick", "=", 
+     RowBox[{"Slider2D", "[", 
+      RowBox[{
+       RowBox[{"Dynamic", "[", 
+        RowBox[{"joy", ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"If", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"Norm", "[", "#", "]"}], ">", "1"}], ",", 
+              RowBox[{"joy", "=", 
+               RowBox[{
+                RowBox[{"Round", "[", 
+                 RowBox[{"100", "*", 
+                  RowBox[{"#", "/", 
+                   RowBox[{"Norm", "[", "#", "]"}]}]}], "]"}], "/", 
+                "100."}]}], ",", 
+              RowBox[{"joy", "=", "#"}]}], "]"}], "&"}], ",", 
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"joy", "=", 
+              RowBox[{"{", 
+               RowBox[{"0", ",", "0"}], "}"}]}], ")"}], "&"}]}], "}"}]}], 
+        "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"-", "1"}], ",", "1", ",", ".01"}], "}"}], ",", 
+       RowBox[{"ImageSize", "\[Rule]", "Large"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"TurnJoystick", "=", 
+     RowBox[{"Slider", "[", 
+      RowBox[{
+       RowBox[{"Dynamic", "[", 
+        RowBox[{"turn", ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"turn", "=", "#"}], ")"}], "&"}], ",", 
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"turn", "=", "0"}], ")"}], "&"}]}], "}"}]}], "]"}], ",", 
+       
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"-", "1"}], ",", "1", ",", ".01"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"ElevationJoystick", "=", 
+     RowBox[{"VerticalSlider", "[", 
+      RowBox[{
+       RowBox[{"Dynamic", "[", 
+        RowBox[{"rise", ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"rise", "=", "#"}], ")"}], "&"}], ",", 
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"rise", "=", "0"}], ")"}], "&"}]}], "}"}]}], "]"}], ",", 
+       
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"-", "1"}], ",", "1", ",", ".01"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"connectButton", "=", 
+     RowBox[{"Dynamic", "[", 
+      RowBox[{"Button", "[", 
+       RowBox[{"buttonMessage", ",", 
+        RowBox[{"If", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"buttonMessage", "\[Equal]", "\"\<Connect\>\""}], "||", 
+           RowBox[{
+           "buttonMessage", "\[Equal]", "\"\<Error, try again\>\""}]}], ",", 
+          RowBox[{
+           RowBox[{"Check", "[", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"<<", "SerialIO`"}], ";", 
+              RowBox[{"myArduino", "=", 
+               RowBox[{"SerialOpen", "[", "USBPortName", "]"}]}], ";", 
+              RowBox[{"SerialSetOptions", "[", 
+               RowBox[{"myArduino", ",", 
+                RowBox[{"\"\<BaudRate\>\"", "\[Rule]", "9600"}]}], "]"}], ";", 
+              RowBox[{"buttonMessage", "=", "\"\<Disconnect\>\""}], ";", 
+              RowBox[{"refresh", "=", "True"}]}], ",", 
+             RowBox[{
+              RowBox[{"buttonMessage", "=", "\"\<Error, try again\>\""}], ";", 
+              RowBox[{"refresh", "=", "False"}]}]}], "]"}], ";"}], ",", 
+          RowBox[{
+           RowBox[{"Quiet", "[", 
+            RowBox[{"SerialClose", "[", "myArduino", "]"}], "]"}], ";", 
+           RowBox[{"buttonMessage", "=", "\"\<Connect\>\""}], ";", 
+           RowBox[{"refresh", "=", "False"}], ";", 
+           RowBox[{"ResetValues", "[", "]"}]}]}], "]"}]}], "]"}], "]"}]}], 
+    ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"PressureButton", "=", 
+     RowBox[{"Button", "[", 
+      RowBox[{"\"\<Tare Pressure\>\"", ",", 
+       RowBox[{"pressureTare", "=", "pressure"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"HumidityButton", "=", 
+     RowBox[{"Button", "[", 
+      RowBox[{"\"\<Tare Humidity\>\"", ",", 
+       RowBox[{"humidityTare", "=", "humidity"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"TemperatureButton", "=", 
+     RowBox[{"Button", "[", 
+      RowBox[{"\"\<Tare Temperature\>\"", ",", 
+       RowBox[{"temperatureTare", "=", "temperature"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"CurrentButton", "=", 
+     RowBox[{"Button", "[", 
+      RowBox[{"\"\<Tare Current\>\"", ",", 
+       RowBox[{"currentTare", "=", "current"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"ResetTaresButton", "=", 
+     RowBox[{"Button", "[", 
+      RowBox[{"\"\<Reset Tares\>\"", ",", 
+       RowBox[{"ResetValues", "[", "]"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"sensorControls", ":=", 
+     RowBox[{"Grid", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{"PressureButton", ",", 
+           RowBox[{"\"\<Pressure: \>\"", "<>", 
+            RowBox[{"FormatReadings", "[", 
+             RowBox[{
+              RowBox[{"pressure", "-", "pressureTare"}], ",", "4"}], 
+             "]"}]}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"HumidityButton", ",", 
+           RowBox[{"\"\<Humidity: \>\"", "<>", 
+            RowBox[{"FormatReadings", "[", 
+             RowBox[{
+              RowBox[{"humidity", "-", "humidityTare"}], ",", "4"}], 
+             "]"}]}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"TemperatureButton", ",", 
+           RowBox[{"\"\<Temperature: \>\"", "<>", 
+            RowBox[{"FormatReadings", "[", 
+             RowBox[{
+              RowBox[{"temperature", "-", "temperatureTare"}], ",", "4"}], 
+             "]"}]}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"CurrentButton", ",", 
+           RowBox[{"\"\<Current: \>\"", "<>", 
+            RowBox[{"FormatReadings", "[", 
+             RowBox[{
+              RowBox[{"current", "-", "currentTare"}], ",", "4"}], "]"}]}]}], 
+          "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{
+          "ResetTaresButton", ",", "\"\<                              \>\""}],
+           "}"}]}], "}"}], ",", 
+       RowBox[{"Frame", "\[Rule]", "None"}], ",", 
+       RowBox[{"Alignment", "\[Rule]", "Left"}]}], "]"}]}], 
+    ";"}]}]}]], "Input",
+ CellChangeTimes->CompressedData["
+1:eJwd0Gkog3EAx/EHK+wFIWV548hkObJytBYeMUeONXuFIppcRXI0xOQa8kok
+XqwcaS9mbMttvDAKSQoRWStWj4ZyLOrB//e8+PZ5/w2valKoPCmKCiNBb/vg
+i+yYoWf45e8wkHGx8EYbL8ghth7Qe3Bna5bTY2F0u5iYW997BJ9tzfcwsnbg
+AYp0Fctyovatwgglq4W+P0TZ3VAg7NkxiFji1OQT56nJlgxjX2NS4KdOVQf5
+8456+Ht8pYaybrYTKkJpF+fIOidVk/4DxYeLLOR99ct+iVm8jzzY6NbLobht
+l3MuszTujygMyI6HZ2M5KbDddpsK1dJzKbS38NKhI8JogH5RZk7VUsIR1Emd
+p/Clw3oJp8csN3Cz5MIOBZpNB0xsqPyCa8MaN8zfV/pTJ+RD10Q0ZKxpZfAq
+tIiztbegGiao9zglwpMVqBCMm+AhOxPkRXzUd0fABc2zmEe8VfYlwRDXvE8w
+UW/V+sLpb1OD4YKhA5RDjdCSMWcuvGbomnznBvwHe44qnQ==
+  "]],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"UI", "=", 
+    RowBox[{"Panel", "[", 
+     RowBox[{"Grid", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{
+          "\"\<Main joystick\>\"", ",", "\"\<Yaw\>\"", ",", 
+           "\"\<    Elevation    \>\""}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{
+          "MainJoystick", ",", "TurnJoystick", ",", "ElevationJoystick"}], 
+          "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{"Dynamic", "[", "joy", "]"}], ",", 
+           RowBox[{"Dynamic", "[", "turn", "]"}], ",", 
+           RowBox[{"Dynamic", "[", "rise", "]"}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{"Item", "[", 
+            RowBox[{
+             RowBox[{"Dynamic", "[", "connectButton", "]"}], ",", 
+             RowBox[{"Alignment", "\[Rule]", "Left"}]}], "]"}], ",", 
+           RowBox[{"Dynamic", "[", 
+            RowBox[{"Panel", "[", "sensorControls", "]"}], "]"}], ",", ","}], 
+          "}"}]}], "}"}], ",", 
+       RowBox[{"Frame", "\[Rule]", "None"}]}], "]"}], "]"}]}], ";"}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Heading", "=", 
+   RowBox[{"Dynamic", "[", 
+    RowBox[{"Show", "[", 
+     RowBox[{
+      RowBox[{"ParametricPlot", "[", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"Cos", "[", "t", "]"}], ",", 
+          RowBox[{"Sin", "[", "t", "]"}]}], "}"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"t", ",", "0", ",", 
+          RowBox[{"2", "Pi"}]}], "}"}], ",", 
+        RowBox[{"PlotRange", "\[Rule]", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{"-", "2"}], ",", "2"}], "}"}]}]}], "]"}], ",", 
+      RowBox[{"Graphics", "[", 
+       RowBox[{"Arrow", "[", 
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{"0", ",", "0"}], "}"}], ",", "joy"}], "}"}], "]"}], "]"}], 
+      ",", 
+      RowBox[{"Graphics", "[", 
+       RowBox[{"{", 
+        RowBox[{"Red", ",", 
+         RowBox[{"Arrow", "[", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{"0", ",", "0"}], "}"}], ",", 
+            RowBox[{"{", 
+             RowBox[{
+              RowBox[{
+               RowBox[{".25", 
+                RowBox[{"RawMotorSpeed", "[", "1", "]"}]}], "-", 
+               RowBox[{".25", 
+                RowBox[{"RawMotorSpeed", "[", "2", "]"}]}], "+", 
+               RowBox[{".25", 
+                RowBox[{"RawMotorSpeed", "[", "3", "]"}]}], "-", 
+               RowBox[{".25", 
+                RowBox[{"RawMotorSpeed", "[", "4", "]"}]}]}], ",", 
+              RowBox[{
+               RowBox[{
+                RowBox[{
+                 RowBox[{"Sqrt", "[", "3", "]"}], "/", "4"}], 
+                RowBox[{"RawMotorSpeed", "[", "1", "]"}]}], "+", 
+               RowBox[{
+                RowBox[{
+                 RowBox[{"Sqrt", "[", "3", "]"}], "/", "4"}], 
+                RowBox[{"RawMotorSpeed", "[", "2", "]"}]}], "+", 
+               RowBox[{
+                RowBox[{
+                 RowBox[{"Sqrt", "[", "3", "]"}], "/", "4"}], 
+                RowBox[{"RawMotorSpeed", "[", "3", "]"}]}], "+", 
+               RowBox[{
+                RowBox[{
+                 RowBox[{"Sqrt", "[", "3", "]"}], "/", "4"}], 
+                RowBox[{"RawMotorSpeed", "[", "4", "]"}]}]}]}], "}"}]}], 
+           "}"}], "]"}]}], "}"}], "]"}], ",", 
+      RowBox[{"ImageSize", "\[Rule]", "400"}]}], "]"}], "]"}]}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.595284855696056*^9, 3.5952848558210506`*^9}, {
+  3.59528490409265*^9, 3.5952849230116653`*^9}, {3.595284980788553*^9, 
+  3.5952850491237173`*^9}, {3.5956778925716953`*^9, 3.595677955786544*^9}, {
+  3.595678005959071*^9, 3.595678009749322*^9}, {3.595678193772869*^9, 
+  3.595678234160577*^9}, {3.595712045199839*^9, 3.595712051604031*^9}, {
+  3.596084194242672*^9, 3.596084208920293*^9}, {3.596092042469825*^9, 
+  3.5960920577560463`*^9}, {3.596134558539023*^9, 3.596134568650609*^9}, {
+  3.596134601777443*^9, 3.596134643175449*^9}, {3.596134816875348*^9, 
+  3.596134847099655*^9}, {3.600116576256654*^9, 3.6001165779848824`*^9}},
+ Background->GrayLevel[0.85]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Row", "[", 
+  RowBox[{"{", 
+   RowBox[{"UI", ",", "\"\<   \>\"", ",", "Heading"}], "}"}], "]"}]], "Input",\
+
+ CellOpen->False,
+ CellChangeTimes->{{3.596134484862514*^9, 3.596134484972342*^9}, {
+  3.596134572238955*^9, 3.596134587725157*^9}, {3.596134625886302*^9, 
+  3.5961346279496737`*^9}}],
+
+Cell[BoxData[
+ TemplateBox[{PanelBox[
+    TagBox[
+     GridBox[{{"\"Main joystick\"", "\"Yaw\"", "\"    Elevation    \"", ""}, {
+       
+        Slider2DBox[
+         Dynamic[
+         SerialIO`Private`joy, {
+          If[Norm[#] > 1, SerialIO`Private`joy = Round[100 (#/Norm[#])]/100., 
+            SerialIO`Private`joy = #]& , (
+           SerialIO`Private`joy = {0, 0})& }], {-1, 1, 0.01}, ImageSize -> 
+         Large], 
+        SliderBox[
+         Dynamic[
+         SerialIO`Private`turn, {(SerialIO`Private`turn = #)& , (
+           SerialIO`Private`turn = 0)& }], {-1, 1, 0.01}], 
+        SliderBox[
+         Dynamic[
+         SerialIO`Private`rise, {(SerialIO`Private`rise = #)& , (
+           SerialIO`Private`rise = 0)& }], {-1, 1, 0.01}, Appearance -> 
+         "Vertical"], ""}, {
+        DynamicBox[
+         ToBoxes[SerialIO`Private`joy, StandardForm], 
+         ImageSizeCache -> {24., {2., 8.}}], 
+        DynamicBox[
+         ToBoxes[SerialIO`Private`turn, StandardForm], 
+         ImageSizeCache -> {6., {1., 8.}}], 
+        DynamicBox[
+         ToBoxes[SerialIO`Private`rise, StandardForm], 
+         ImageSizeCache -> {6., {1., 8.}}], ""}, {
+        ItemBox[
+         DynamicBox[
+          ToBoxes[SerialIO`Private`connectButton, StandardForm], 
+          ImageSizeCache -> {72., {9.3, 16.7}}], Alignment -> Left, 
+         StripOnInput -> False], 
+        DynamicBox[
+         ToBoxes[
+          Panel[SerialIO`Private`sensorControls], StandardForm], 
+         ImageSizeCache -> {253., {82., 88.}}], "", ""}}, AutoDelete -> False,
+       GridBoxFrame -> {"Columns" -> None, "Rows" -> None}, 
+      GridBoxItemSize -> {
+       "Columns" -> {{Automatic}}, "Rows" -> {{Automatic}}}], "Grid"]],
+   "\"   \"",DynamicBox[
+    ToBoxes[
+     Show[
+      ParametricPlot[{
+        Cos[SerialIO`Private`t], 
+        Sin[SerialIO`Private`t]}, {SerialIO`Private`t, 0, 2 Pi}, 
+       PlotRange -> {-2, 2}], 
+      Graphics[
+       Arrow[{{0, 0}, SerialIO`Private`joy}]], 
+      Graphics[{Red, 
+        Arrow[{{0, 0}, {
+          0.25 SerialIO`Private`RawMotorSpeed[1] - 0.25 
+           SerialIO`Private`RawMotorSpeed[2] + 
+           0.25 SerialIO`Private`RawMotorSpeed[3] - 0.25 
+           SerialIO`Private`RawMotorSpeed[4], (Sqrt[3]/4) 
+            SerialIO`Private`RawMotorSpeed[1] + (Sqrt[3]/4) 
+            SerialIO`Private`RawMotorSpeed[2] + (Sqrt[3]/4) 
+            SerialIO`Private`RawMotorSpeed[3] + (Sqrt[3]/4) 
+            SerialIO`Private`RawMotorSpeed[4]}}]}], ImageSize -> 400], 
+     StandardForm], ImageSizeCache -> {400., {199., 203.}}]},
+  "RowDefault"]], "Output",
+ CellChangeTimes->{3.603150713587516*^9, 3.603302161508513*^9, 
+  3.6033101869925222`*^9, 3.603573988376872*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Reading", " ", "and", " ", "writing", " ", "values"}], " ", 
+   "*)"}], "\[IndentingNewLine]", "\t", 
+  RowBox[{"(*", " ", "Read", " ", "*)"}], "\[IndentingNewLine]", "\t\t", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Gets", " ", "all", " ", "data", " ", "from", " ", "the", " ", "connected",
+     " ", 
+    RowBox[{"Arduino", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"Dynamic", "[", 
+    RowBox[{"Refresh", "[", 
+     RowBox[{
+      RowBox[{"If", "[", 
+       RowBox[{"refresh", ",", 
+        RowBox[{"input", "=", 
+         RowBox[{"SerialRead", "[", "myArduino", "]"}]}]}], "]"}], ",", 
+      RowBox[{"UpdateInterval", "\[Rule]", ".1"}]}], "]"}], "]"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", "\t\t", 
+   RowBox[{"(*", " ", 
+    RowBox[{"Sets", " ", "the", " ", "specific", " ", "senser", " ", 
+     RowBox[{"values", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"Dynamic", "[", 
+      RowBox[{"pressure", "=", 
+       RowBox[{"readValue", "[", 
+        RowBox[{"input", ",", "\"\<P\>\""}], "]"}]}], "]"}], ",", 
+     RowBox[{"Dynamic", "[", 
+      RowBox[{"humidity", "=", 
+       RowBox[{"readValue", "[", 
+        RowBox[{"input", ",", "\"\<H\>\""}], "]"}]}], "]"}], ",", 
+     RowBox[{"Dynamic", "[", 
+      RowBox[{"temperature", "=", 
+       RowBox[{"readValue", "[", 
+        RowBox[{"input", ",", "\"\<T\>\""}], "]"}]}], "]"}], ",", 
+     RowBox[{"Dynamic", "[", 
+      RowBox[{"current", "=", 
+       RowBox[{"readValue", "[", 
+        RowBox[{"input", ",", "\"\<C\>\""}], "]"}]}], "]"}]}], "}"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", "\t", 
+   RowBox[{"(*", " ", "Write", " ", "*)"}], "\[IndentingNewLine]", "\t\t", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Writes", " ", "the", " ", "motor", " ", "speeds", " ", "to", " ", "the", 
+     " ", 
+     RowBox[{"Arduino", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{"Dynamic", "[", 
+    RowBox[{"Refresh", "[", 
+     RowBox[{
+      RowBox[{"If", "[", 
+       RowBox[{"refresh", ",", 
+        RowBox[{"SerialWrite", "[", 
+         RowBox[{"myArduino", ",", 
+          RowBox[{"MotorString", "[", "]"}]}], "]"}]}], "]"}], ",", 
+      RowBox[{"TrackedSymbols", "\[RuleDelayed]", 
+       RowBox[{"{", "}"}]}], ",", 
+      RowBox[{"UpdateInterval", "\[Rule]", ".1"}]}], "]"}], 
+    "]"}]}]}]], "Input",
+ CellOpen->False,
+ CellChangeTimes->{{3.5960890200113373`*^9, 3.596089103249937*^9}, {
+   3.596089135563755*^9, 3.59608929575673*^9}, {3.596091980452031*^9, 
+   3.59609198321562*^9}, {3.596096701952859*^9, 3.596096757805949*^9}, {
+   3.596098161867104*^9, 3.596098290510594*^9}, {3.596098341743678*^9, 
+   3.5960985153719873`*^9}, {3.5960985525693483`*^9, 
+   3.5960985526424427`*^9}, {3.596098625847582*^9, 3.596098627344401*^9}, 
+   3.5961004913804827`*^9, {3.59610086419561*^9, 3.596100866343239*^9}, {
+   3.596101234459347*^9, 3.596101247256825*^9}, {3.599013031729705*^9, 
+   3.599013031863716*^9}, 3.599013203172613*^9, 3.599013680547592*^9, 
+   3.599013732322896*^9, {3.599013998555554*^9, 3.599014017518474*^9}, {
+   3.59901411338435*^9, 3.599014128709752*^9}, {3.599671271927824*^9, 
+   3.599671274493773*^9}, {3.5996713190140543`*^9, 3.599671319323965*^9}, {
+   3.599682094562674*^9, 3.599682097015891*^9}, {3.599684020984672*^9, 
+   3.599684029564251*^9}, {3.599684158185437*^9, 3.599684159646008*^9}, {
+   3.599954249747429*^9, 3.599954281283139*^9}, {3.5999545254560757`*^9, 
+   3.599954533135518*^9}, {3.6025421044479427`*^9, 3.602542120479137*^9}, {
+   3.6025421538324423`*^9, 3.602542155717215*^9}, {3.602542328564336*^9, 
+   3.602542329943204*^9}, {3.602542398379575*^9, 3.6025423993278227`*^9}, {
+   3.602542924032238*^9, 3.602542924098819*^9}}],
+
+Cell[BoxData[
+ DynamicBox[ToBoxes[
+   Refresh[
+    If[SerialIO`Private`refresh, SerialIO`Private`input = 
+     SerialIO`SerialRead[SerialIO`Private`myArduino]], UpdateInterval -> 0.1],
+    StandardForm],
+  ImageSizeCache->{31., {0., 9.}}]], "Output",
+ CellChangeTimes->{{3.599954271006168*^9, 3.599954297249763*^9}, {
+   3.599954534213736*^9, 3.599954537342148*^9}, {3.600116516718276*^9, 
+   3.600116521135597*^9}, {3.602542073519424*^9, 3.6025420792910957`*^9}, 
+   3.602542125319038*^9, 3.602542164974195*^9, 3.602542330802597*^9, 
+   3.602542401217284*^9, 3.602542928734097*^9, 3.6027700847591248`*^9, 
+   3.603147627255307*^9, 3.603302161573612*^9, 3.6033101870455647`*^9, 
+   3.603573989368788*^9}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   DynamicBox[ToBoxes[
+    SerialIO`Private`pressure = 
+     SerialIO`Private`readValue[SerialIO`Private`input, "P"], StandardForm],
+    ImageSizeCache->{32., {1., 9.}}], ",", 
+   DynamicBox[ToBoxes[
+    SerialIO`Private`humidity = 
+     SerialIO`Private`readValue[SerialIO`Private`input, "H"], StandardForm],
+    ImageSizeCache->{32., {1., 9.}}], ",", 
+   DynamicBox[ToBoxes[
+    SerialIO`Private`temperature = 
+     SerialIO`Private`readValue[SerialIO`Private`input, "T"], StandardForm],
+    ImageSizeCache->{32., {1., 9.}}], ",", 
+   DynamicBox[ToBoxes[
+    SerialIO`Private`current = 
+     SerialIO`Private`readValue[SerialIO`Private`input, "C"], StandardForm],
+    ImageSizeCache->{32., {1., 9.}}]}], "}"}]], "Output",
+ CellChangeTimes->{{3.599954271006168*^9, 3.599954297249763*^9}, {
+   3.599954534213736*^9, 3.599954537342148*^9}, {3.600116516718276*^9, 
+   3.600116521135597*^9}, {3.602542073519424*^9, 3.6025420792910957`*^9}, 
+   3.602542125319038*^9, 3.602542164974195*^9, 3.602542330802597*^9, 
+   3.602542401217284*^9, 3.602542928734097*^9, 3.6027700847591248`*^9, 
+   3.603147627255307*^9, 3.603302161573612*^9, 3.6033101870455647`*^9, 
+   3.60357398940664*^9}],
+
+Cell[BoxData[
+ DynamicBox[ToBoxes[
+   Refresh[
+    If[SerialIO`Private`refresh, 
+     SerialIO`SerialWrite[SerialIO`Private`myArduino, 
+      SerialIO`Private`MotorString[]]], TrackedSymbols :> {}, UpdateInterval -> 
+    0.1], StandardForm],
+  ImageSizeCache->{31., {0., 9.}}]], "Output",
+ CellChangeTimes->{{3.599954271006168*^9, 3.599954297249763*^9}, {
+   3.599954534213736*^9, 3.599954537342148*^9}, {3.600116516718276*^9, 
+   3.600116521135597*^9}, {3.602542073519424*^9, 3.6025420792910957`*^9}, 
+   3.602542125319038*^9, 3.602542164974195*^9, 3.602542330802597*^9, 
+   3.602542401217284*^9, 3.602542928734097*^9, 3.6027700847591248`*^9, 
+   3.603147627255307*^9, 3.603302161573612*^9, 3.6033101870455647`*^9, 
+   3.603573989526308*^9}]
+}, Open  ]]
+},
+WindowSize->{1128, 701},
+WindowMargins->{{2, Automatic}, {Automatic, 0}},
+FrontEndVersion->"9.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (January 25, \
+2013)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[400, 13, 550, 19, 19, "Text",
+ CellOpen->False],
+Cell[953, 34, 2347, 47, 147, "Input"],
+Cell[3303, 83, 5403, 130, 216, "Input"],
+Cell[8709, 215, 6719, 160, 419, "Input"],
+Cell[15431, 377, 7151, 188, 420, "Input"],
+Cell[22585, 567, 4216, 106, 198, "Input"],
+Cell[CellGroupData[{
+Cell[26826, 677, 316, 8, 19, "Input",
+ CellOpen->False],
+Cell[27145, 687, 2705, 64, 438, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[29887, 756, 3781, 80, 19, "Input",
+ CellOpen->False],
+Cell[33671, 838, 704, 13, 28, "Output"],
+Cell[34378, 853, 1216, 25, 28, "Output"],
+Cell[35597, 880, 742, 14, 28, "Output"]
+}, Open  ]]
+}
+]
+*)
+
