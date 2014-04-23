@@ -3,10 +3,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[         0,          0]
-NotebookDataLength[     37338,        936]
-NotebookOptionsPosition[     36355,        897]
-NotebookOutlinePosition[     36710,        913]
-CellTagsIndexPosition[     36667,        910]
+NotebookDataLength[     39082,        984]
+NotebookOptionsPosition[     38097,        945]
+NotebookOutlinePosition[     38452,        961]
+CellTagsIndexPosition[     38409,        958]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -65,7 +65,53 @@ Cell[BoxData[
     RowBox[{"buttonMessage", "=", "\"\<Connect\>\""}], ";", 
     RowBox[{"refresh", "=", "False"}], ";", 
     RowBox[{"USBPortName", "=", "\"\</dev/tty.usbmodem641\>\""}], ";", 
-    RowBox[{"ResetValues", "[", "]"}], ";"}]}]}]], "Input",
+    RowBox[{"ResetValues", "[", "]"}], ";"}], "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{"Get", " ", "controller", " ", "values"}], " ", "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"noiseThreshold", "=", ".1"}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Stabilize", "[", "x_", "]"}], ":=", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Abs", "[", "x", "]"}], "<", "noiseThreshold"}], ",", "0", 
+       ",", 
+       RowBox[{"x", "*", 
+        RowBox[{"Abs", "[", "x", "]"}]}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"joy", ":=", 
+     RowBox[{"Stabilize", "/@", 
+      RowBox[{"ControllerState", "[", 
+       RowBox[{"{", 
+        RowBox[{"\"\<X\>\"", ",", "\"\<Z\>\""}], "}"}], "]"}]}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"turn", ":=", 
+     RowBox[{"Stabilize", "@", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"#1", "-", "#2"}], "&"}], ")"}], "[", 
+       RowBox[{
+        RowBox[{"ControllerState", "[", "\"\<R\>\"", "]"}], ",", 
+        RowBox[{"ControllerState", "[", "\"\<L\>\"", "]"}]}], "]"}]}]}], 
+    ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"rise", ":=", 
+     RowBox[{"Stabilize", "@", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"#1", "-", "#2"}], "&"}], ")"}], "[", 
+       RowBox[{
+        RowBox[{"ControllerState", "[", "\"\<U\>\"", "]"}], ",", 
+        RowBox[{"ControllerState", "[", "\"\<D\>\"", "]"}]}], "]"}]}]}], 
+    ";"}]}]}]], "Input",
  CellChangeTimes->{{3.5957312966679068`*^9, 3.5957313074269953`*^9}, 
    3.596076908787994*^9, {3.596077231805501*^9, 3.5960772461076727`*^9}, {
    3.596078445259172*^9, 3.596078445553772*^9}, {3.596078581496068*^9, 
@@ -78,7 +124,9 @@ Cell[BoxData[
    3.596101506216495*^9}, {3.596106062451651*^9, 3.5961060642666616`*^9}, 
    3.596141592084228*^9, {3.5990124967405767`*^9, 3.599012497037023*^9}, {
    3.5999509311266317`*^9, 3.599950933347471*^9}, {3.602542040240068*^9, 
-   3.602542075847447*^9}, 3.602784432508593*^9},
+   3.602542075847447*^9}, 3.602784432508593*^9, {3.607149395830494*^9, 
+   3.607149489955364*^9}, {3.607149910828165*^9, 3.607149931603661*^9}, {
+   3.607150063303537*^9, 3.6071500685931797`*^9}},
  Background->GrayLevel[0.85]],
 
 Cell[BoxData[
@@ -691,38 +739,34 @@ Cell[BoxData[
      GridBox[{{"\"Main joystick\"", "\"Yaw\"", "\"    Elevation    \"", ""}, {
        
         Slider2DBox[
-         Dynamic[
-         SerialIO`Private`joy, {
-          If[Norm[#] > 1, SerialIO`Private`joy = Round[100 (#/Norm[#])]/100., 
-            SerialIO`Private`joy = #]& , (
-           SerialIO`Private`joy = {0, 0})& }], {-1, 1, 0.01}, ImageSize -> 
-         Large], 
+         Dynamic[$CellContext`joy, {
+          If[Norm[#] > 1, $CellContext`joy = 
+            Round[100 (#/Norm[#])]/
+             100., $CellContext`joy = #]& , ($CellContext`joy = {0, 
+            0})& }], {-1, 1, 0.01}, ImageSize -> Large], 
         SliderBox[
-         Dynamic[
-         SerialIO`Private`turn, {(SerialIO`Private`turn = #)& , (
-           SerialIO`Private`turn = 0)& }], {-1, 1, 0.01}], 
+         Dynamic[$CellContext`turn, {($CellContext`turn = #)& , \
+($CellContext`turn = 0)& }], {-1, 1, 0.01}], 
         SliderBox[
-         Dynamic[
-         SerialIO`Private`rise, {(SerialIO`Private`rise = #)& , (
-           SerialIO`Private`rise = 0)& }], {-1, 1, 0.01}, Appearance -> 
-         "Vertical"], ""}, {
+         Dynamic[$CellContext`rise, {($CellContext`rise = #)& , \
+($CellContext`rise = 0)& }], {-1, 1, 0.01}, Appearance -> "Vertical"], ""}, {
         DynamicBox[
-         ToBoxes[SerialIO`Private`joy, StandardForm], 
+         ToBoxes[$CellContext`joy, StandardForm], 
          ImageSizeCache -> {24., {2., 8.}}], 
         DynamicBox[
-         ToBoxes[SerialIO`Private`turn, StandardForm], 
+         ToBoxes[$CellContext`turn, StandardForm], 
          ImageSizeCache -> {6., {1., 8.}}], 
         DynamicBox[
-         ToBoxes[SerialIO`Private`rise, StandardForm], 
+         ToBoxes[$CellContext`rise, StandardForm], 
          ImageSizeCache -> {6., {1., 8.}}], ""}, {
         ItemBox[
          DynamicBox[
-          ToBoxes[SerialIO`Private`connectButton, StandardForm], 
+          ToBoxes[$CellContext`connectButton, StandardForm], 
           ImageSizeCache -> {72., {9.3, 16.7}}], Alignment -> Left, 
          StripOnInput -> False], 
         DynamicBox[
          ToBoxes[
-          Panel[SerialIO`Private`sensorControls], StandardForm], 
+          Panel[$CellContext`sensorControls], StandardForm], 
          ImageSizeCache -> {253., {82., 88.}}], "", ""}}, AutoDelete -> False,
        GridBoxFrame -> {"Columns" -> None, "Rows" -> None}, 
       GridBoxItemSize -> {
@@ -731,25 +775,26 @@ Cell[BoxData[
     ToBoxes[
      Show[
       ParametricPlot[{
-        Cos[SerialIO`Private`t], 
-        Sin[SerialIO`Private`t]}, {SerialIO`Private`t, 0, 2 Pi}, 
+        Cos[$CellContext`t], 
+        Sin[$CellContext`t]}, {$CellContext`t, 0, 2 Pi}, 
        PlotRange -> {-2, 2}], 
       Graphics[
-       Arrow[{{0, 0}, SerialIO`Private`joy}]], 
+       Arrow[{{0, 0}, $CellContext`joy}]], 
       Graphics[{Red, 
         Arrow[{{0, 0}, {
-          0.25 SerialIO`Private`RawMotorSpeed[1] - 0.25 
-           SerialIO`Private`RawMotorSpeed[2] + 
-           0.25 SerialIO`Private`RawMotorSpeed[3] - 0.25 
-           SerialIO`Private`RawMotorSpeed[4], (Sqrt[3]/4) 
-            SerialIO`Private`RawMotorSpeed[1] + (Sqrt[3]/4) 
-            SerialIO`Private`RawMotorSpeed[2] + (Sqrt[3]/4) 
-            SerialIO`Private`RawMotorSpeed[3] + (Sqrt[3]/4) 
-            SerialIO`Private`RawMotorSpeed[4]}}]}], ImageSize -> 400], 
+          0.25 $CellContext`RawMotorSpeed[1] - 
+           0.25 $CellContext`RawMotorSpeed[2] + 
+           0.25 $CellContext`RawMotorSpeed[3] - 
+           0.25 $CellContext`RawMotorSpeed[
+            4], (Sqrt[3]/4) $CellContext`RawMotorSpeed[1] + (Sqrt[3]/
+             4) $CellContext`RawMotorSpeed[2] + (Sqrt[3]/
+             4) $CellContext`RawMotorSpeed[3] + (Sqrt[3]/
+             4) $CellContext`RawMotorSpeed[4]}}]}], ImageSize -> 400], 
      StandardForm], ImageSizeCache -> {400., {199., 203.}}]},
   "RowDefault"]], "Output",
  CellChangeTimes->{3.603150713587516*^9, 3.603302161508513*^9, 
-  3.6033101869925222`*^9, 3.603573988376872*^9}]
+  3.6033101869925222`*^9, 3.603573988376872*^9, 3.607146884043305*^9, 
+  3.607148880663924*^9, 3.607149384613225*^9}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -839,9 +884,9 @@ Cell[BoxData[
 Cell[BoxData[
  DynamicBox[ToBoxes[
    Refresh[
-    If[SerialIO`Private`refresh, SerialIO`Private`input = 
-     SerialIO`SerialRead[SerialIO`Private`myArduino]], UpdateInterval -> 0.1],
-    StandardForm],
+    If[$CellContext`refresh, $CellContext`input = 
+     SerialIO`SerialRead[$CellContext`myArduino]], UpdateInterval -> 0.1], 
+   StandardForm],
   ImageSizeCache->{31., {0., 9.}}]], "Output",
  CellChangeTimes->{{3.599954271006168*^9, 3.599954297249763*^9}, {
    3.599954534213736*^9, 3.599954537342148*^9}, {3.600116516718276*^9, 
@@ -849,26 +894,27 @@ Cell[BoxData[
    3.602542125319038*^9, 3.602542164974195*^9, 3.602542330802597*^9, 
    3.602542401217284*^9, 3.602542928734097*^9, 3.6027700847591248`*^9, 
    3.603147627255307*^9, 3.603302161573612*^9, 3.6033101870455647`*^9, 
-   3.603573989368788*^9}],
+   3.603573989368788*^9, 3.607146884216886*^9, 3.607148880770995*^9, 
+   3.607149384709305*^9}],
 
 Cell[BoxData[
  RowBox[{"{", 
   RowBox[{
-   DynamicBox[ToBoxes[
-    SerialIO`Private`pressure = 
-     SerialIO`Private`readValue[SerialIO`Private`input, "P"], StandardForm],
+   DynamicBox[
+    ToBoxes[$CellContext`pressure = $CellContext`readValue[$CellContext`input,
+        "P"], StandardForm],
     ImageSizeCache->{32., {1., 9.}}], ",", 
-   DynamicBox[ToBoxes[
-    SerialIO`Private`humidity = 
-     SerialIO`Private`readValue[SerialIO`Private`input, "H"], StandardForm],
+   DynamicBox[
+    ToBoxes[$CellContext`humidity = $CellContext`readValue[$CellContext`input,
+        "H"], StandardForm],
     ImageSizeCache->{32., {1., 9.}}], ",", 
-   DynamicBox[ToBoxes[
-    SerialIO`Private`temperature = 
-     SerialIO`Private`readValue[SerialIO`Private`input, "T"], StandardForm],
+   DynamicBox[
+    ToBoxes[$CellContext`temperature = \
+$CellContext`readValue[$CellContext`input, "T"], StandardForm],
     ImageSizeCache->{32., {1., 9.}}], ",", 
-   DynamicBox[ToBoxes[
-    SerialIO`Private`current = 
-     SerialIO`Private`readValue[SerialIO`Private`input, "C"], StandardForm],
+   DynamicBox[
+    ToBoxes[$CellContext`current = $CellContext`readValue[$CellContext`input, 
+       "C"], StandardForm],
     ImageSizeCache->{32., {1., 9.}}]}], "}"}]], "Output",
  CellChangeTimes->{{3.599954271006168*^9, 3.599954297249763*^9}, {
    3.599954534213736*^9, 3.599954537342148*^9}, {3.600116516718276*^9, 
@@ -876,14 +922,15 @@ Cell[BoxData[
    3.602542125319038*^9, 3.602542164974195*^9, 3.602542330802597*^9, 
    3.602542401217284*^9, 3.602542928734097*^9, 3.6027700847591248`*^9, 
    3.603147627255307*^9, 3.603302161573612*^9, 3.6033101870455647`*^9, 
-   3.60357398940664*^9}],
+   3.603573989368788*^9, 3.607146884216886*^9, 3.607148880770995*^9, 
+   3.607149384711944*^9}],
 
 Cell[BoxData[
  DynamicBox[ToBoxes[
    Refresh[
-    If[SerialIO`Private`refresh, 
-     SerialIO`SerialWrite[SerialIO`Private`myArduino, 
-      SerialIO`Private`MotorString[]]], TrackedSymbols :> {}, UpdateInterval -> 
+    If[$CellContext`refresh, 
+     SerialIO`SerialWrite[$CellContext`myArduino, 
+      $CellContext`MotorString[]]], TrackedSymbols :> {}, UpdateInterval -> 
     0.1], StandardForm],
   ImageSizeCache->{31., {0., 9.}}]], "Output",
  CellChangeTimes->{{3.599954271006168*^9, 3.599954297249763*^9}, {
@@ -892,7 +939,8 @@ Cell[BoxData[
    3.602542125319038*^9, 3.602542164974195*^9, 3.602542330802597*^9, 
    3.602542401217284*^9, 3.602542928734097*^9, 3.6027700847591248`*^9, 
    3.603147627255307*^9, 3.603302161573612*^9, 3.6033101870455647`*^9, 
-   3.603573989526308*^9}]
+   3.603573989368788*^9, 3.607146884216886*^9, 3.607148880770995*^9, 
+   3.6071493847154827`*^9}]
 }, Open  ]]
 },
 WindowSize->{1128, 701},
@@ -914,22 +962,22 @@ CellTagsIndex->{}
 Notebook[{
 Cell[400, 13, 550, 19, 19, "Text",
  CellOpen->False],
-Cell[953, 34, 2347, 47, 147, "Input"],
-Cell[3303, 83, 5403, 130, 216, "Input"],
-Cell[8709, 215, 6719, 160, 419, "Input"],
-Cell[15431, 377, 7151, 188, 420, "Input"],
-Cell[22585, 567, 4216, 106, 198, "Input"],
+Cell[953, 34, 4037, 95, 249, "Input"],
+Cell[4993, 131, 5403, 130, 216, "Input"],
+Cell[10399, 263, 6719, 160, 419, "Input"],
+Cell[17121, 425, 7151, 188, 420, "Input"],
+Cell[24275, 615, 4216, 106, 198, "Input"],
 Cell[CellGroupData[{
-Cell[26826, 677, 316, 8, 19, "Input",
+Cell[28516, 725, 316, 8, 19, "Input",
  CellOpen->False],
-Cell[27145, 687, 2705, 64, 438, "Output"]
+Cell[28835, 735, 2614, 61, 438, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[29887, 756, 3781, 80, 19, "Input",
+Cell[31486, 801, 3781, 80, 19, "Input",
  CellOpen->False],
-Cell[33671, 838, 704, 13, 28, "Output"],
-Cell[34378, 853, 1216, 25, 28, "Output"],
-Cell[35597, 880, 742, 14, 28, "Output"]
+Cell[35270, 883, 762, 14, 28, "Output"],
+Cell[36035, 899, 1241, 26, 28, "Output"],
+Cell[37279, 927, 802, 15, 28, "Output"]
 }, Open  ]]
 }
 ]
