@@ -1,7 +1,7 @@
 # NOTE: this is not fully functional yet. As in, it still doesn't work properly.
 
 import serial, math;
-from enum import Enum;
+# from enum import Enum;
 from serial import Serial, SerialException, SerialTimeoutException;
 from time import sleep;
 
@@ -31,7 +31,7 @@ class Motor:
         self.power = power;
         self.dir = dir;
 
-class MOTOR(Enum):
+class MOTOR():
     FR_LF = 1; # front left
     FR_RT = 2; # front right
     BA_RT = 3; # back right
@@ -110,12 +110,6 @@ def write_motor_values(ser):
         dir = b'1' if pow > 0 else b'0';
         ser.write(motors[motor].pow_header + bytes([abs(pow)] * 2));
         ser.write(motors[motor].dir_header + dir * 2);
-
-
-
-
-
-
 
 def get_motor_power(n):
     """Takes the motor number and returns the magnitude of the total power it
@@ -197,16 +191,18 @@ def main():
     # do something about this
     global sensor_values;
     
-    ser = connect("COM3");
+   # ser = connect("COM3");
     
     while True:
-        try:
-            write_motor_values(ser);
-        except SerialTimeoutException:
-            print("write timeout");
+        # try:
+            # write_motor_values(ser);
+        # except SerialTimeoutException:
+            # print("write timeout");
         
-        read_data_values(ser, sensor_values);
+        # read_data_values(ser, sensor_values);
         
+		
+		
         sleep(5);
 
 main();
