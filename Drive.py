@@ -197,7 +197,7 @@ def main():
     # do something about this
     global sensor_values;
     
-    ser = connect("/dev/console");
+    ser = connect("COM3");
     
     while True:
         try:
