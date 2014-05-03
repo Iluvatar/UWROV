@@ -1,4 +1,8 @@
-import Tkinter as tk	   
+import Tkinter as tk	  
+import serial, math;
+# from enum import Enum;
+from serial import Serial, SerialException, SerialTimeoutException;
+from time import sleep;
 
 class OrcusGUI(tk.Frame):			  
 	def __init__(self, master=None):
@@ -98,7 +102,3 @@ class OrcusGUI(tk.Frame):
 		self.frontVertLine = self.C.create_line(VERT_X, FRONT_VERT_Y, VERT_X, FRONT_VERT_Y-50+int(self.frontVert), width=10)
 		self.backVertLine = self.C.create_line(VERT_X, BACK_VERT_Y, VERT_X, BACK_VERT_Y-50+int(self.backVert), width=10)
 
-gui = OrcusGUI()		
-gui.master.geometry("500x500")			   
-gui.master.title('ROV ORCUS')  
-gui.mainloop()   
