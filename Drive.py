@@ -84,9 +84,7 @@ def read_data_values(ser, data_values):
     raw_data = ser.read(read_chars);
     
     for key in data_values.keys():
-        pos = raw_data.rfind(key[:-2]);
-        print("raw:", raw_data);
-        print("pos:", pos);
+        pos = raw_data[:-2].rfind(key);
         if pos != -1:
             bit1 = key[pos + 1];
             bit2 = key[pos + 2];
