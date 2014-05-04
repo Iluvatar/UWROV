@@ -51,11 +51,23 @@ class Control:
         self.yaw_tare = yaw_tare;
         self.rise_tare = rise_tare;
     
-    def tare():
-        self.trans_x_tare = trans_x;
-        self.trans_y_tare = trans_y;
-        self.yaw_tare = yaw;
-        self.rise_tare = rise;
+    def tare(self):
+        self.trans_x_tare = self.trans_x;
+        self.trans_y_tare = self.trans_y;
+        self.yaw_tare = self.yaw;
+        self.rise_tare = self.rise;
+    
+    def trans_x_value(self):
+        return self.trans_x - self.trans_x_tare;
+        
+    def trans_y_value(self):
+        return self.trans_y - self.trans_y_tare;
+        
+    def yaw_value(self):
+        return self.yaw - self.yaw_tare;
+        
+    def rise_value(self):
+        return self.rise - self.rise_tare;
 
 
 
@@ -115,18 +127,19 @@ def write_motor_values(ser):
 
 
 
-def update_motor_values():
-    # do something about this
+def update_motor_values(control):
+    # do something about thisself.
     global motors;
     
     for motor in motors:
-        motors[motor].power = get_motor_power(motor);
+        motors[motor].power = get_motor_power(motor, control);
 
-def get_motor_power(n):
+def get_motor_power(n, control):
     """Takes the motor number and returns the magnitude of the total power it
     should output, from -255 to 255. Returns 0 if an invalid motor is given."""
     
-    power_sum = get_trans_power(n) + get_yaw_power(n) + get_rise_power(n);
+    power_sum = get_trans_power(n, control) + get_yaw_power(n, control) + \
+                get_rise_power(n, control);
     scaled_power = int(power_sum * 255);
     try:
         return min(scaled_power, 255) if scaled_power > 0 else max(scaled_power, -255);
@@ -135,72 +148,67 @@ def get_motor_power(n):
         return 0;
 
 
-def get_trans_power(n):
+def get_trans_power(n, control):
     """Takes the motor number and returns the power it should output for
     translational motion, from -1 to 1.
     
     Raises a ValueError if the motor number is unrecognized."""
     
-    # do something about this
-    global trans_x, trans_y;
-    
     # these motors don't have an effect on translational speed
     if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
         return 0;
     if n == MOTOR.FR_LF or n == MOTOR.BA_RT:
         # TODO implement
-        return -1 * trans_y;
+        return -1 * control.trans_y_value();
     if n == MOTOR.FR_RT or n == MOTOR.BA_LF:
         # TODO implement
-        return trans_y;
+        return control.trans_y_value();
     raise ValueError("get_trans_power: Illegal motor number");
 
 
-def get_yaw_power(n):
+def get_yaw_power(n, control):
     """Takes the motor number and returns the power it should output for
     rotational motion, from -1 to 1.
     
     Raises a ValueError if the motor number is unrecognized."""
     
-    # do something about this
-    global yaw;
-    
     # these motors don't have an effect on translational speed
     if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
         return 0;
     if n == MOTOR.FR_LF or n == MOTOR.BA_RT:
-        return yaw;
+        return control.yaw_value();
     if n == MOTOR.FR_RT or n == MOTOR.BA_LF:
-        return -1 * yaw;
+        return -1 * control.yaw_value();
     raise ValueError("get_yaw_power: Illegal motor number");
 
 
-def get_rise_power(n):
+def get_rise_power(n, control):
     """Takes the motor number and returns the power it should output for
     vertical motion, from -1 to 1.
     
     Raises a ValueError if the motor number is unrecognized."""
-    
-    # do something about this
-    global rise;
     
     # these motors don't have an effect on translational speed
     if n == MOTOR.FR_LF or n == MOTOR.BA_RT or \
        n == MOTOR.FR_RT or n == MOTOR.BA_LF:
         return 0;
     if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
-        return rise;
+        return control.rise_value();
     raise ValueError("get_rise_power: Illegal motor number");
 
 
 
 
-def update_joy_values(joystick):
-    global trans_x, trans_y, yaw, rise;
-    trans_x = joystick.get_axis(0);
-    trans_y = -1 * joystick.get_axis(1);
-    rise = -1 * joystick.get_axis(3);
-    yaw = joystick.get_axis(4);
+def update_joy_values(joystick, control):
+    control.trans_x = joystick.get_axis(0);
+    control.trans_y = -1 * joystick.get_axis(1);
+    control.rise = -1 * joystick.get_axis(3);
+    control.yaw = joystick.get_axis(4);
+
+def process_joy_events():
+    for event in pygame.event.get():
+        if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 1:
+            control.tare();
 
 
 
@@ -208,9 +216,8 @@ def update_joy_values(joystick):
 
 
 
-# range -1 to 1
-trans_x, trans_y, yaw, rise = 0, 0, 0, 0;
 ser = None;
+control = Control();
 
 motors = {MOTOR.FR_LF: Motor(MOTOR.FR_LF, b'1', b'a'),
           MOTOR.FR_RT: Motor(MOTOR.FR_RT, b'2', b'b'),
@@ -239,8 +246,9 @@ def joy_init():
 
 
 def onexit():
-    global ser, trans_x, trans_y, yaw, rise;
-    trans_x, trans_y, yaw, rise = 0, 0, 0, 0;
+    control.trans_x, control.trans_y, control.yaw, control.rise = 0, 0, 0, 0;
+    control.trans_x_tare, control.trans_y_tare = 0, 0;
+    control.yaw_tare, control.rise_tare = 0, 0;
     update_motor_values();
     write_motor_values(ser);
 
@@ -254,16 +262,14 @@ def print_data_values(data_values):
 
 
 def main():
-    # do something about this
-    global ser, sensor_values, trans_x, trans_y, yaw, rise;
+    global control;
     
     joystick = joy_init();
-    
     ser = connect("COM3");
     
     while True:
-        update_joy_values(joystick);
-        update_motor_values();
+        update_joy_values(joystick, control);
+        update_motor_values(control);
         try:
             write_motor_values(ser);
         except SerialTimeoutException:
@@ -272,7 +278,8 @@ def main():
         read_data_values(ser, sensor_values);
         #print_data_values(sensor_values);
         
-        pygame.event.pump();
+        process_joy_events();
+        
         sleep(.1);
 
 
