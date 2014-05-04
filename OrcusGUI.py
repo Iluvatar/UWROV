@@ -24,17 +24,22 @@ class OrcusGUI(tk.Frame):
 		self.frontVert = 0
 		self.backVert = 0
 		
-		self.C = tk.Canvas(self, height=235, width=169)
-		self.rovTop = tk.PhotoImage(file='./orcusTop.gif')
-		#self.rov = self.C.create_rectangle(20,20,180,255, fill='#4c0099')
-		self.rov = self.C.create_image(1,1,image=self.rovTop, anchor='nw')
-		self.frontLeftLine = self.C.create_line(0,0,0,0)
-		self.frontRightLine = self.C.create_line(0,0,0,0)
-		self.backLeftLine = self.C.create_line(0,0,0,0)
-		self.backRightLine = self.C.create_line(0,0,0,0)
-		self.frontVertLine = self.C.create_line(0,0,0,0)
-		self.backVertLine = self.C.create_line(0,0,0,0)
-		self.C.grid(row = 0, column = 0, rowspan = 6)
+		self.rovTop = tk.Canvas(self, height=235, width=169)
+		self.rovTopView = tk.PhotoImage(file='./orcusTop.gif')
+		#self.rov = self.rovTop.create_rectangle(20,20,180,255, fill='#4c0099')
+		self.rov = self.rovTop.create_image(1,1,image=self.rovTopView, anchor='nw')
+		self.frontLeftLine = self.rovTop.create_line(0,0,0,0)
+		self.frontRightLine = self.rovTop.create_line(0,0,0,0)
+		self.backLeftLine = self.rovTop.create_line(0,0,0,0)
+		self.backRightLine = self.rovTop.create_line(0,0,0,0)
+		self.rovTop.grid(row = 0, column = 0, padx = 30, pady = 30)
+		
+		self.rovSide = tk.Canvas(self, height=148, width=235)
+		self.rovSideView = tk.PhotoImage(file='./orcusSide.gif')
+		self.rov = self.rovSide.create_image(1,1,image=self.rovSideView, anchor='nw')
+		self.frontVertLine = self.rovTop.create_line(0,0,0,0)
+		self.backVertLine = self.rovTop.create_line(0,0,0,0)
+		self.rovSide.grid(row = 0, column = 1, padx = 30, pady = 30)
 		
 		self.grid()		
 		self.getControlInput()
@@ -43,28 +48,16 @@ class OrcusGUI(tk.Frame):
 	# Motor control slider callbacks
 	def frontLeftMotorValue(self, value = 0):
 		self.frontLeft = int(value)
-		#self.printMotorValues()
-		#self.drawMotorStatus()
 	def frontRightMotorValue(self, value = 0):
 		self.frontRight = int(value)
-		#self.printMotorValues()
-		#self.drawMotorStatus()
 	def backLeftMotorValue(self, value = 0):
 		self.backLeft = int(value)
-		#self.printMotorValues()
-		#self.drawMotorStatus()
 	def backRightMotorValue(self, value = 0):
 		self.backRight = int(value)
-		#self.printMotorValues()
-		#self.drawMotorStatus()
 	def frontVertMotorValue(self, value = 0):
 		self.frontVert = int(value)
-		#self.printMotorValues()
-		#self.drawMotorStatus()
 	def BackVertMotorValue(self, value = 0):
 		self.backVert = int(value)
-		#self.printMotorValues()
-		#self.drawMotorStatus()
 			
 	# gets control information from sliders
 	def getControlInput(self):
@@ -76,10 +69,11 @@ class OrcusGUI(tk.Frame):
 		for i in range(0,6):
 			label = motorLabels[i]
 			self.motorScaleLabel = tk.Label(self, text = label)
-			self.motorScaleLabel.grid(row = i, column = 1, sticky = tk.W)
+			self.motorScaleLabel.grid(row = i + 2, column = 0, sticky = tk.W)
 			
 			self.motorScroll = tk.Scale(self, command=motorValueCallbacks[i], orient=tk.HORIZONTAL)
-			self.motorScroll.grid(row = i, column = 2, padx = 0, pady = 10, ipadx = 100)
+			self.motorScroll.set(50)
+			self.motorScroll.grid(row = i + 2, column = 1, ipadx = 100)
 	
 	# prints motor values from sliders
 	def printMotorValues(self):
@@ -92,28 +86,26 @@ class OrcusGUI(tk.Frame):
 	
 	# draws ROV motors status
 	def drawMotorStatus(self, motors):
-		FRONT_Y = 50;
-		BACK_Y = 210;
-		LEFT_X = 40;
-		RIGHT_X = 160;
-		VERT_X = 100;
-		FRONT_VERT_Y = 75;
-		BACK_VERT_Y = 180;
+		FRONT_Y = 40
+		BACK_Y = 205
+		LEFT_X = 40
+		RIGHT_X = 130
+		FRONT_VERT_X = 53
+		BACK_VERT_X = 195
+		VERT_Y = 65;
 		
-		self.C.delete(self.frontLeftLine)
-		self.C.delete(self.frontRightLine)
-		self.C.delete(self.backLeftLine)
-		self.C.delete(self.backRightLine)
-		self.C.delete(self.frontVertLine)
-		self.C.delete(self.backVertLine)
+		self.rovTop.delete(self.frontLeftLine)
+		self.rovTop.delete(self.frontRightLine)
+		self.rovTop.delete(self.backLeftLine)
+		self.rovTop.delete(self.backRightLine)
+		self.rovSide.delete(self.frontVertLine)
+		self.rovSide.delete(self.backVertLine)
 		
-		print (str(motors[MOTOR.FR_LF].power))
-		
-		self.frontLeftLine = self.C.create_line(LEFT_X, FRONT_Y, LEFT_X+0.5*motors[MOTOR.FR_LF].power/2, FRONT_Y-0.866*motors[MOTOR.FR_LF].power/2, width=10)
-		self.frontRightLine = self.C.create_line(RIGHT_X, FRONT_Y, RIGHT_X-0.5*motors[MOTOR.FR_RT].power/2, FRONT_Y-0.866*motors[MOTOR.FR_RT].power/2, width=10)
-		self.backLeftLine = self.C.create_line(LEFT_X, BACK_Y, LEFT_X+0.5*motors[MOTOR.BA_LF].power/2, BACK_Y+0.866*motors[MOTOR.BA_LF].power/2, width=10)
-		self.backRightLine = self.C.create_line(RIGHT_X, BACK_Y, RIGHT_X-0.5*motors[MOTOR.BA_RT].power/2, BACK_Y+0.866*motors[MOTOR.BA_RT].power/2, width=10)
-		self.frontVertLine = self.C.create_line(VERT_X, FRONT_VERT_Y, VERT_X, FRONT_VERT_Y+motors[MOTOR.FR_VT].power/2, width=10)
-		self.backVertLine = self.C.create_line(VERT_X, BACK_VERT_Y, VERT_X, BACK_VERT_Y+motors[MOTOR.BA_VT].power/2, width=10)
+		self.frontLeftLine = self.rovTop.create_line(LEFT_X, FRONT_Y, LEFT_X+0.5*motors[MOTOR.FR_LF].power/3, FRONT_Y-0.866*motors[MOTOR.FR_LF].power/3, width=10, arrow=tk.LAST, fill='red')
+		self.frontRightLine = self.rovTop.create_line(RIGHT_X, FRONT_Y, RIGHT_X-0.5*motors[MOTOR.FR_RT].power/3, FRONT_Y-0.866*motors[MOTOR.FR_RT].power/3, width=10, arrow=tk.LAST, fill='red')
+		self.backLeftLine = self.rovTop.create_line(LEFT_X, BACK_Y, LEFT_X+0.5*motors[MOTOR.BA_LF].power/3, BACK_Y+0.866*motors[MOTOR.BA_LF].power/3, width=10, arrow=tk.LAST, fill='red')
+		self.backRightLine = self.rovTop.create_line(RIGHT_X, BACK_Y, RIGHT_X-0.5*motors[MOTOR.BA_RT].power/3, BACK_Y+0.866*motors[MOTOR.BA_RT].power/3, width=10, arrow=tk.LAST, fill='red')
+		self.frontVertLine = self.rovSide.create_line(FRONT_VERT_X, VERT_Y, FRONT_VERT_X, VERT_Y-motors[MOTOR.FR_VT].power/3, width=10, arrow=tk.LAST, fill='red')
+		self.backVertLine = self.rovSide.create_line(BACK_VERT_X, VERT_Y, BACK_VERT_X, VERT_Y-motors[MOTOR.BA_VT].power/3, width=10, arrow=tk.LAST, fill='red')
 		
 
