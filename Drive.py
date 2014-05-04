@@ -99,7 +99,7 @@ def read_data_values(ser, data_values):
 def write_motor_values(ser):
 	"""Writes the motor power and direction to the serial port.
 	
-	Each write consists of a header followed by the value repeated twice.o"""
+	Each write consists of a header followed by the value repeated twice."""
 	
 	# do something about this
 	global motors;
@@ -188,7 +188,11 @@ def mainDrive():
 	
    # ser = connect("COM3");
  		
-	print("test")
+	# print("test")
+	# print gui.printMotorValues()
+	trans_x = gui.frontLeft / 100.0 
+	print ("trans_x" + str(trans_x))
+	gui.drawMotorStatus(motors)
 	
 	# try:
 		# write_motor_values(ser);
@@ -202,5 +206,5 @@ def mainDrive():
 gui = OrcusGUI()		
 gui.master.geometry("500x500")			   
 gui.master.title('ROV ORCUS')  
-gui.after(1, mainDrive())
+gui.after(1, mainDrive)
 gui.mainloop()   

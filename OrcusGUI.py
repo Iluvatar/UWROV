@@ -4,6 +4,14 @@ import serial, math;
 from serial import Serial, SerialException, SerialTimeoutException;
 from time import sleep;
 
+class MOTOR():
+	FR_LF = 1; # front left
+	FR_RT = 2; # front right
+	BA_RT = 3; # back right
+	BA_LF = 4; # back left
+	FR_VT = 5; # front vertical
+	BA_VT = 6; # back vertical
+
 class OrcusGUI(tk.Frame):			  
 	def __init__(self, master=None):
 		tk.Frame.__init__(self, master)  
@@ -26,33 +34,33 @@ class OrcusGUI(tk.Frame):
 		
 		self.grid()		
 		self.getControlInput()
-		self.drawMotorStatus()
+		#self.drawMotorStatus()
 	
 	# Motor control slider callbacks
 	def frontLeftMotorValue(self, value = 0):
 		self.frontLeft = int(value)
-		self.printMotorValues()
-		self.drawMotorStatus()
+		#self.printMotorValues()
+		#self.drawMotorStatus()
 	def frontRightMotorValue(self, value = 0):
 		self.frontRight = int(value)
-		self.printMotorValues()
-		self.drawMotorStatus()
+		#self.printMotorValues()
+		#self.drawMotorStatus()
 	def backLeftMotorValue(self, value = 0):
 		self.backLeft = int(value)
-		self.printMotorValues()
-		self.drawMotorStatus()
+		#self.printMotorValues()
+		#self.drawMotorStatus()
 	def backRightMotorValue(self, value = 0):
 		self.backRight = int(value)
-		self.printMotorValues()
-		self.drawMotorStatus()
+		#self.printMotorValues()
+		#self.drawMotorStatus()
 	def frontVertMotorValue(self, value = 0):
 		self.frontVert = int(value)
-		self.printMotorValues()
-		self.drawMotorStatus()
+		#self.printMotorValues()
+		#self.drawMotorStatus()
 	def BackVertMotorValue(self, value = 0):
 		self.backVert = int(value)
-		self.printMotorValues()
-		self.drawMotorStatus()
+		#self.printMotorValues()
+		#self.drawMotorStatus()
 			
 	# gets control information from sliders
 	def getControlInput(self):
@@ -79,7 +87,7 @@ class OrcusGUI(tk.Frame):
 		print ("BackVert: " + str(self.backVert))
 	
 	# draws ROV motors status
-	def drawMotorStatus(self):
+	def drawMotorStatus(self, motors):
 		FRONT_Y = 50;
 		BACK_Y = 210;
 		LEFT_X = 40;
@@ -95,10 +103,19 @@ class OrcusGUI(tk.Frame):
 		self.C.delete(self.frontVertLine)
 		self.C.delete(self.backVertLine)
 		
-		self.frontLeftLine = self.C.create_line(LEFT_X, FRONT_Y, LEFT_X+0.5*(int(self.frontLeft)-50), FRONT_Y-0.866*(int(self.frontLeft)-50), width=10)
+		print str(motors[MOTOR.FR_LF].power)
+		
+		self.frontLeftLine = self.C.create_line(LEFT_X, FRONT_Y, LEFT_X+0.5*motors['motor.FR_LF'].power-50), FRONT_Y-0.866*(motors['motor.FR_LF'].power), width=10)
 		self.frontRightLine = self.C.create_line(RIGHT_X, FRONT_Y, RIGHT_X-0.5*(int(self.frontRight)-50), FRONT_Y-0.866*(int(self.frontRight)-50), width=10)
 		self.backLeftLine = self.C.create_line(LEFT_X, BACK_Y, LEFT_X+0.5*(int(self.backLeft)-50), BACK_Y+0.866*(int(self.backLeft)-50), width=10)
 		self.backRightLine = self.C.create_line(RIGHT_X, BACK_Y, RIGHT_X-0.5*(int(self.backRight)-50), BACK_Y+0.866*(int(self.backRight)-50), width=10)
 		self.frontVertLine = self.C.create_line(VERT_X, FRONT_VERT_Y, VERT_X, FRONT_VERT_Y-50+int(self.frontVert), width=10)
 		self.backVertLine = self.C.create_line(VERT_X, BACK_VERT_Y, VERT_X, BACK_VERT_Y-50+int(self.backVert), width=10)
+		
+		# self.frontLeftLine = self.C.create_line(LEFT_X, FRONT_Y, LEFT_X+0.5*(int(self.frontLeft)-50), FRONT_Y-0.866*(int(self.frontLeft)-50), width=10)
+		# self.frontRightLine = self.C.create_line(RIGHT_X, FRONT_Y, RIGHT_X-0.5*(int(self.frontRight)-50), FRONT_Y-0.866*(int(self.frontRight)-50), width=10)
+		# self.backLeftLine = self.C.create_line(LEFT_X, BACK_Y, LEFT_X+0.5*(int(self.backLeft)-50), BACK_Y+0.866*(int(self.backLeft)-50), width=10)
+		# self.backRightLine = self.C.create_line(RIGHT_X, BACK_Y, RIGHT_X-0.5*(int(self.backRight)-50), BACK_Y+0.866*(int(self.backRight)-50), width=10)
+		# self.frontVertLine = self.C.create_line(VERT_X, FRONT_VERT_Y, VERT_X, FRONT_VERT_Y-50+int(self.frontVert), width=10)
+		# self.backVertLine = self.C.create_line(VERT_X, BACK_VERT_Y, VERT_X, BACK_VERT_Y-50+int(self.backVert), width=10)
 
