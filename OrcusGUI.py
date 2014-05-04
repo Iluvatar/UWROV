@@ -1,5 +1,5 @@
 import Tkinter as tk	
-import math  
+import tkFont
 # import serial, math;
 # # from enum import Enum;
 # from serial import Serial, SerialException, SerialTimeoutException;
@@ -24,6 +24,10 @@ class OrcusGUI(tk.Frame):
 		self.frontVert = 0
 		self.backVert = 0
 		
+		self.bannerFont = tkFont.Font(family='Calibri', size=20, weight='bold')
+		self.banner = tk.Label(self, text='University of Washington Underwater Robotics\nUWROV', font = self.bannerFont, background='#4c0099')
+		self.banner.grid(row=0, column=0, columnspan=3)
+		
 		self.rovTop = tk.Canvas(self, height=235, width=169)
 		self.rovTopView = tk.PhotoImage(file='./orcusTop.gif')
 		#self.rov = self.rovTop.create_rectangle(20,20,180,255, fill='#4c0099')
@@ -32,14 +36,14 @@ class OrcusGUI(tk.Frame):
 		self.frontRightLine = self.rovTop.create_line(0,0,0,0)
 		self.backLeftLine = self.rovTop.create_line(0,0,0,0)
 		self.backRightLine = self.rovTop.create_line(0,0,0,0)
-		self.rovTop.grid(row = 0, column = 0, padx = 30, pady = 30)
+		self.rovTop.grid(row = 1, column = 0, padx = 30, pady = 30)
 		
 		self.rovSide = tk.Canvas(self, height=148, width=235)
 		self.rovSideView = tk.PhotoImage(file='./orcusSide.gif')
 		self.rov = self.rovSide.create_image(1,1,image=self.rovSideView, anchor='nw')
 		self.frontVertLine = self.rovTop.create_line(0,0,0,0)
 		self.backVertLine = self.rovTop.create_line(0,0,0,0)
-		self.rovSide.grid(row = 0, column = 1, padx = 30, pady = 30)
+		self.rovSide.grid(row = 1, column = 1, padx = 30, pady = 30)
 		
 		self.grid()		
 		self.getControlInput()
@@ -69,11 +73,11 @@ class OrcusGUI(tk.Frame):
 		for i in range(0,6):
 			label = motorLabels[i]
 			self.motorScaleLabel = tk.Label(self, text = label)
-			self.motorScaleLabel.grid(row = i + 2, column = 0, sticky = tk.W)
+			self.motorScaleLabel.grid(row = i + 3, column = 0, sticky = tk.W)
 			
 			self.motorScroll = tk.Scale(self, command=motorValueCallbacks[i], orient=tk.HORIZONTAL)
 			self.motorScroll.set(50)
-			self.motorScroll.grid(row = i + 2, column = 1, ipadx = 100)
+			self.motorScroll.grid(row = i + 3, column = 1, ipadx = 100)
 	
 	# prints motor values from sliders
 	def printMotorValues(self):

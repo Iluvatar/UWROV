@@ -299,7 +299,7 @@ def mainDrive():
 
 
 gui = OrcusGUI()		
-gui.master.geometry("705x750")			   
+gui.master.geometry("700x625")			   
 gui.master.title('ROV ORCUS')  
 gui.after(1, mainDrive)
 gui.mainloop()   
