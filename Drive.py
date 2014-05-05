@@ -279,6 +279,7 @@ def mainDrive():
 	motors[MOTOR.BA_VT].power = gui.backVert * 2.5 - 127
 	
 	gui.drawMotorStatus(motors)
+	gui.estopControl()
 	
 	# try:
 		# write_motor_values(ser);
