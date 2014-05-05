@@ -261,6 +261,8 @@ def print_data_values(data_values):
 		raise ValueError("print_data_values: data_values not of type dict");
 	pprint(data_values);
 
+val = 0
+	
 def mainDrive():
 	global control;
 	
@@ -280,6 +282,15 @@ def mainDrive():
 	
 	gui.drawMotorStatus(motors)
 	gui.estopControl()
+	gui.updateSensorReadings()
+
+	global val
+	val = val + 1
+	if (val > 255):
+		val = 0
+	
+	gui.pressureValue = val
+	gui.masterCurrentValue = val
 	
 	# try:
 		# write_motor_values(ser);

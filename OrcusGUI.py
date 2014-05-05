@@ -20,14 +20,20 @@ START_POSITION = 50
 
 class OrcusGUI(tk.Frame):	
 	def __init__(self, master=None):
+		# Initialize root frame
 		tk.Frame.__init__(self, master)  
+		# Initialize motor speed values
 		self.frontLeft = 0
 		self.frontRight = 0
 		self.backLeft = 0
 		self.backRight = 0
 		self.frontVert = 0
 		self.backVert = 0
+		# Initialize ESTOP
 		self.ESTOP = False # starts with system running?  True means stop
+		# Initialize sensor values
+		self.pressureValue = 0
+		self.masterCurrentValue = 0
 		
 		# Displays banner
 		self.bannerFont = tkFont.Font(family='Calibri', size=20, weight='bold')
@@ -131,14 +137,27 @@ class OrcusGUI(tk.Frame):
 	def estopButton(self):
 		self.estopFont = tkFont.Font(family='Calibri', size=20, weight='bold')
 		self.estop = tk.Button(self, text='ESTOP', font=self.estopFont, command=self.estopCallback, background='red', width=7, padx=20, pady=20)
-		self.estop.grid(row=1, column=3)
-		
+		self.estop.grid(row=3, column=1)
+	
+	# Displays sensor readings
 	def sensorReadings(self):
 		# Creates label frame for sensor readings
-		self.sensorFrame = tk.LabelFrame(self, text='Sensor Readings')
-		self.sensorFrame.pressureSensorLabel = tkLabel(self.sensorFrame, text='Pressure Reading')
-		self.sensorFrame.pressureSensorLabel.grid(row=9, column=0)
-		self.sensorFrame.grid(row=3, column=0)
+		self.sensorFrame = tk.LabelFrame(self, text='Sensor Readings', width=200, height=75)
+		
+		# Pressure sensor
+		self.sensorFrame.pressure = tk.Label(self.sensorFrame, text='Pressure Reading: ' + str(self.pressureValue))
+		self.sensorFrame.pressure.grid(row=0, column=0, sticky='w')
+		# Current sensor
+		self.sensorFrame.masterCurrent = tk.Label(self.sensorFrame, text='Master Current Reading: ' + str(self.masterCurrentValue))
+		self.sensorFrame.masterCurrent.grid(row=1, column=0, sticky='w')
+		
+		self.sensorFrame.grid(row=3, column=0, ipadx=10)
+		self.sensorFrame.grid_propagate(0)
+		
+	# Updates sensor reading labels
+	def updateSensorReadings(self):
+		self.sensorFrame.pressure.configure(text='Pressure Reading: ' + str(self.pressureValue))
+		self.sensorFrame.masterCurrent.configure(text='Master Current Reading: ' + str(self.masterCurrentValue))
 		
 	
 	# draws ROV motors status
