@@ -6,6 +6,16 @@ import tkFont
 from time import sleep;
 from MOTOR import MOTOR
 
+# Motor line coordinate constants
+FRONT_Y = 40
+BACK_Y = 205
+LEFT_X = 40
+RIGHT_X = 130
+FRONT_VERT_X = 53
+BACK_VERT_X = 195
+VERT_Y = 65;
+
+# Slider start position
 START_POSITION = 50
 
 class OrcusGUI(tk.Frame):	
@@ -24,8 +34,11 @@ class OrcusGUI(tk.Frame):
 		self.banner = tk.Label(self, text='University of Washington Underwater Robotics\nUWROV', font = self.bannerFont, background='#4c0099')
 		self.banner.grid(row=0, column=0, columnspan=3)
 		
-		# creates eStop button
+		# Creates eStop button
 		self.estopButton()
+		
+		# Displays sensor readings
+		self.sensorReadings()
 		
 		# Draws ROV top view with translational motor arrows
 		self.rovTop = tk.Canvas(self, height=235, width=169)
@@ -76,11 +89,11 @@ class OrcusGUI(tk.Frame):
 		for i in range(0,6):
 			label = motorLabels[i]
 			self.motorScaleLabel = tk.Label(self, text = label)
-			self.motorScaleLabel.grid(row = i + 3, column = 0, sticky = tk.W)
+			self.motorScaleLabel.grid(row = i + 4, column = 0, sticky = tk.W)
 			
 			self.motorScrolls[i] = tk.Scale(self, command=motorValueCallbacks[i], orient=tk.HORIZONTAL)
 			self.motorScrolls[i].set(START_POSITION)
-			self.motorScrolls[i].grid(row = i + 3, column = 1, ipadx = 100)
+			self.motorScrolls[i].grid(row = i + 4, column = 1, ipadx = 100)
 	
 	# prints motor values from sliders
 	# Not used ****
@@ -119,18 +132,17 @@ class OrcusGUI(tk.Frame):
 		self.estopFont = tkFont.Font(family='Calibri', size=20, weight='bold')
 		self.estop = tk.Button(self, text='ESTOP', font=self.estopFont, command=self.estopCallback, background='red', width=7, padx=20, pady=20)
 		self.estop.grid(row=1, column=3)
+		
+	def sensorReadings(self):
+		# Creates label frame for sensor readings
+		self.sensorFrame = tk.LabelFrame(self, text='Sensor Readings')
+		self.sensorFrame.pressureSensorLabel = tkLabel(self.sensorFrame, text='Pressure Reading')
+		self.sensorFrame.pressureSensorLabel.grid(row=9, column=0)
+		self.sensorFrame.grid(row=3, column=0)
+		
 	
 	# draws ROV motors status
-	def drawMotorStatus(self, motors):
-		# Motor line coordinate constants
-		FRONT_Y = 40
-		BACK_Y = 205
-		LEFT_X = 40
-		RIGHT_X = 130
-		FRONT_VERT_X = 53
-		BACK_VERT_X = 195
-		VERT_Y = 65;
-		
+	def drawMotorStatus(self, motors):	
 		# Delete old line
 		self.rovTop.delete(self.frontLeftLine)
 		self.rovTop.delete(self.frontRightLine)
