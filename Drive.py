@@ -1,4 +1,4 @@
-# NOTE: this is not fully functional yet. As in, it still doesn't work properly.
+# NOTE: this is not fully functional yet but it should work
 
 import serial, math, pygame;
 import math
@@ -7,8 +7,6 @@ from serial import Serial, SerialException, SerialTimeoutException;
 from time import sleep;
 from OrcusGUI import OrcusGUI
 from MOTOR import MOTOR
-# NOTE: this is not fully functional yet. As in, it still doesn't work properly.
-
 
 """
 	  Front
@@ -138,10 +136,6 @@ def write_motor_values(ser):
 		ser.write(motors[motor].pow_header + bytes([abs(pow)] * 2));
 		ser.write(motors[motor].dir_header + dir * 2);
 
-
-
-
-
 def update_motor_values(control):
 	# do something about thisself.
 	global motors;
@@ -211,9 +205,6 @@ def get_rise_power(n, control):
 		return control.rise_value();
 	raise ValueError("get_rise_power: Illegal motor number");
 
-
-
-
 def update_joy_values(joystick, control):
 	control.trans_x = joystick.get_axis(0);
 	control.trans_y = -1 * joystick.get_axis(1);
@@ -251,8 +242,6 @@ def print_data_values(data_values):
 		raise ValueError("print_data_values: data_values not of type dict");
 	pprint(data_values);
 
-val = 0
-	
 def mainDrive():
 	global control;
 	
@@ -273,15 +262,10 @@ def mainDrive():
 	gui.drawMotorStatus(motors)
 	gui.estopControl()
 	gui.updateSensorReadings()
-
-	global val
-	val = val + 1
-	if (val > 255):
-		val = 0
 	
 	# set sensor values here and the gui will be updated
-	gui.pressureValue = val
-	gui.masterCurrentValue = val
+	gui.pressureValue = 100
+	gui.masterCurrentValue = 100
 	gui.ROVconnect = "connected"
 	gui.controllerConnect = "connected"
 	
