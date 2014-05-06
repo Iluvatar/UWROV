@@ -1,4 +1,4 @@
-# NOTE: this is not fully functional yet but it should work
+# NOTE: this is not fully functional yet. As in, it still doesn't work properly.
 
 import serial, math, pygame;
 import math
@@ -7,6 +7,8 @@ from serial import Serial, SerialException, SerialTimeoutException;
 from time import sleep;
 from OrcusGUI import OrcusGUI
 from MOTOR import MOTOR
+# NOTE: this is not fully functional yet. As in, it still doesn't work properly.
+
 
 """
 	  Front
@@ -51,22 +53,22 @@ class Control:
 		self.trans_y_tare = trans_y_tare;
 		self.yaw_tare = yaw_tare;
 		self.rise_tare = rise_tare;
-	
+
 	def tare(self):
 		self.trans_x_tare = self.trans_x;
 		self.trans_y_tare = self.trans_y;
 		self.yaw_tare = self.yaw;
 		self.rise_tare = self.rise;
-	
+
 	def trans_x_value(self):
 		return self.trans_x - self.trans_x_tare;
-		
+
 	def trans_y_value(self):
 		return self.trans_y - self.trans_y_tare;
-		
+
 	def yaw_value(self):
 		return self.yaw - self.yaw_tare;
-		
+
 	def rise_value(self):
 		return self.rise - self.rise_tare;
 
@@ -87,7 +89,7 @@ sensor_values = {b'P': 0, b'H': 0, b'T': 0, b'C': 0};
 def connect(port_name):
 	"""Returns a Serial object that is connected to the port_name. Returns
 	None if the connection could not be made."""
-	
+
 	try:
 		return Serial(port_name, timeout = .5, writeTimeout = .5);
 	except SerialException:
@@ -101,21 +103,21 @@ def read_data_values(ser, data_values):
 	The keys in data_values should be bytes that are the headers for sensor
 	values. Attempts to find each key in the read data and then updates it if
 	the next two bytes are consistent."""
-	
+
 	if not isinstance(data_values, dict):
 		raise ValueError("read_data_values: data_values not of type dict");
 	if not isinstance(ser, Serial):
 		raise ValueError("read_data_values: ser not of type Serial");
-		
+
 	# so we don't read too much data
 	read_chars = min(ser.inWaiting(), len(data_values) * 5);
 	raw_data = ser.read(read_chars);
-	
+
 	for key in data_values.keys():
 		pos = raw_data[:-1].rfind(key);
 		if pos != -1:
 			data_values[key] = raw_data[pos + 1];
-	
+
 	if read_chars > 12:
 		ser.flushInput();
 
@@ -124,10 +126,10 @@ def write_motor_values(ser):
 	"""Writes the motor power and direction to the serial port.
 	
 	Each write consists of a header followed by the value repeated twice."""
-	
+
 	# do something about this
 	global motors;
-	
+
 	if not isinstance(ser, Serial):
 		raise ValueError("write_motor_values: ser not of type Serial")
 	for motor in motors:
@@ -136,17 +138,21 @@ def write_motor_values(ser):
 		ser.write(motors[motor].pow_header + bytes([abs(pow)] * 2));
 		ser.write(motors[motor].dir_header + dir * 2);
 
+
+
+
+
 def update_motor_values(control):
 	# do something about thisself.
 	global motors;
-	
+
 	for motor in motors:
 		motors[motor].power = get_motor_power(motor, control);
 
 def get_motor_power(n, control):
 	"""Takes the motor number and returns the magnitude of the total power it
 	should output, from -255 to 255. Returns 0 if an invalid motor is given."""
-	
+
 	power_sum = get_trans_power(n, control) + get_yaw_power(n, control) + \
 				get_rise_power(n, control);
 	scaled_power = int(power_sum * 255);
@@ -162,7 +168,7 @@ def get_trans_power(n, control):
 	translational motion, from -1 to 1.
 	
 	Raises a ValueError if the motor number is unrecognized."""
-	
+
 	# these motors don't have an effect on translational speed
 	if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
 		return 0;
@@ -180,7 +186,7 @@ def get_yaw_power(n, control):
 	rotational motion, from -1 to 1.
 	
 	Raises a ValueError if the motor number is unrecognized."""
-	
+
 	# these motors don't have an effect on translational speed
 	if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
 		return 0;
@@ -196,7 +202,7 @@ def get_rise_power(n, control):
 	vertical motion, from -1 to 1.
 	
 	Raises a ValueError if the motor number is unrecognized."""
-	
+
 	# these motors don't have an effect on translational speed
 	if n == MOTOR.FR_LF or n == MOTOR.BA_RT or \
 	   n == MOTOR.FR_RT or n == MOTOR.BA_LF:
@@ -204,6 +210,9 @@ def get_rise_power(n, control):
 	if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
 		return control.rise_value();
 	raise ValueError("get_rise_power: Illegal motor number");
+
+
+
 
 def update_joy_values(joystick, control):
 	control.trans_x = joystick.get_axis(0);
@@ -219,7 +228,7 @@ def process_joy_events():
 def joy_init():
 	"""Initializes pygame and the joystick, and returns the joystick to be
 	used."""
-	
+
 	pygame.init();
 	pygame.joystick.init();
 	if pygame.joystick.get_count() == 0:
@@ -242,15 +251,17 @@ def print_data_values(data_values):
 		raise ValueError("print_data_values: data_values not of type dict");
 	pprint(data_values);
 
+val = 0
+
 def mainDrive():
 	global control;
-	
+
 	joystick = joy_init();
 	ser = connect("COM3");
-	
+
 	update_joy_values(joystick, control);
 	update_motor_values(control);
-	
+
 	# sets the motor values to the sliders
 	motors[MOTOR.FR_LF].power = gui.frontLeft * 1.25
 	motors[MOTOR.FR_RT].power = gui.frontRight * 1.25
@@ -258,29 +269,34 @@ def mainDrive():
 	motors[MOTOR.BA_RT].power = gui.backRight * 1.25
 	motors[MOTOR.FR_VT].power = gui.frontVert * 1.25
 	motors[MOTOR.BA_VT].power = gui.backVert * 1.25
-	
+
 	gui.drawMotorStatus(motors)
 	gui.estopControl()
 	gui.updateSensorReadings()
-	
+
+	global val
+	val = val + 1
+	if (val > 255):
+		val = 0
+
 	# set sensor values here and the gui will be updated
-	gui.pressureValue = 100
-	gui.masterCurrentValue = 100
+	gui.pressureValue = val
+	gui.masterCurrentValue = val
 	gui.ROVconnect = "connected"
 	gui.controllerConnect = "connected"
-	
+
 	try:
 		write_motor_values(ser);
 	except SerialTimeoutException:
 		print("write timeout");
-	
+
 	read_data_values(ser, sensor_values);
 	print_data_values(sensor_values);
-	
+
 	process_joy_events();
-	
+
 	gui.after(1, mainDrive) # loops the mainDrive method
-	
+
 # Start gui and call mainDrive loop
 gui = OrcusGUI()		
 gui.master.geometry("812x800") # make sure all widgets start inside			   
