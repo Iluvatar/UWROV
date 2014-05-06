@@ -15,13 +15,13 @@ from MOTOR import MOTOR
 
  FR_LF	 FR_RT
    /---------\
-  /|		 |\
+  /|	     |\
    |  FR_VT  |
-   |	o	|
-   |		 |
-   |	o	|
+   |	o    |
+   |	     |
+   |	o    |
    |  BA_VT  |
-  \|		 |/
+  \|	     |/
    \---------/
  BA_LF	 BA_RT
 
