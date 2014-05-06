@@ -1,9 +1,9 @@
 # NOTE: this is not fully functional yet. As in, it still doesn't work properly.
 
-# import serial, math;
+import serial, math, pygame;
 import math
 # from enum import Enum;
-# from serial import Serial, SerialException, SerialTimeoutException;
+from serial import Serial, SerialException, SerialTimeoutException;
 from time import sleep;
 from OrcusGUI import OrcusGUI
 from MOTOR import MOTOR
@@ -72,59 +72,71 @@ class Control:
 	def rise_value(self):
 		return self.rise - self.rise_tare;
 
+ser = None;
+control = Control();
 
+motors = {MOTOR.FR_LF: Motor(MOTOR.FR_LF, b'1', b'a'),
+		  MOTOR.FR_RT: Motor(MOTOR.FR_RT, b'2', b'b'),
+		  MOTOR.BA_RT: Motor(MOTOR.BA_RT, b'3', b'c'),
+		  MOTOR.BA_LF: Motor(MOTOR.BA_LF, b'4', b'd'),
+		  MOTOR.FR_VT: Motor(MOTOR.FR_VT, b'5', b'e'),
+		  MOTOR.BA_VT: Motor(MOTOR.BA_VT, b'6', b'f')};
 
-# def connect(port_name):
-	# """Returns a Serial object that is connected to the port_name. Returns
-	# None if the connection could not be made."""
+# range 0 to 255
+# pressure, humidity, temperature, current
+sensor_values = {b'P': 0, b'H': 0, b'T': 0, b'C': 0};
+
+def connect(port_name):
+	"""Returns a Serial object that is connected to the port_name. Returns
+	None if the connection could not be made."""
 	
-	# try:
-		# return Serial(port_name, timeout = .5, writeTimeout = .5);
-	# except SerialException:
-		# print("connect: could not connect to port " + port_name);
-		# return None;
+	try:
+		return Serial(port_name, timeout = .5, writeTimeout = .5);
+	except SerialException:
+		print("connect: could not connect to port " + port_name);
+		return None;
 
 
-# def read_data_values(ser, data_values):
-	# """Reads data from ser and updates the dict data_values.
+def read_data_values(ser, data_values):
+	"""Reads data from ser and updates the dict data_values.
 	
-	# The keys in data_values should be bytes that are the headers for sensor
-	# values. Attempts to find each key in the read data and then updates it if
-	# the next two bytes are consistent."""
+	The keys in data_values should be bytes that are the headers for sensor
+	values. Attempts to find each key in the read data and then updates it if
+	the next two bytes are consistent."""
 	
-	# if not isinstance(data_values, dict):
-		# raise ValueError("read_data_values: data_values not of type dict");
-	# if not isinstance(ser, Serial):
-		# raise ValueError("read_data_values: ser not of type Serial");
+	if not isinstance(data_values, dict):
+		raise ValueError("read_data_values: data_values not of type dict");
+	if not isinstance(ser, Serial):
+		raise ValueError("read_data_values: ser not of type Serial");
 		
-	# # so we don't read too much data
-	# read_chars = min(ser.inWaiting(), len(data_values) * 5);
-	# raw_data = ser.read(read_chars);
+	# so we don't read too much data
+	read_chars = min(ser.inWaiting(), len(data_values) * 5);
+	raw_data = ser.read(read_chars);
 	
-	# for key in data_values.keys():
-		# pos = raw_data[:-1].rfind(key);
-		# if pos != -1:
-			# data_values[key] = raw_data[pos + 1];
+	for key in data_values.keys():
+		pos = raw_data[:-1].rfind(key);
+		if pos != -1:
+			data_values[key] = raw_data[pos + 1];
 	
-	# if read_chars > 12:
-		# ser.flushInput();
+	if read_chars > 12:
+		ser.flushInput();
 
 
-# def write_motor_values(ser):
-	# """Writes the motor power and direction to the serial port.
+def write_motor_values(ser):
+	"""Writes the motor power and direction to the serial port.
 	
-	# Each write consists of a header followed by the value repeated twice."""
+	Each write consists of a header followed by the value repeated twice."""
 	
-	# # do something about this
-	# global motors;
+	# do something about this
+	global motors;
 	
-	# if not isinstance(ser, Serial):
-		# raise ValueError("write_motor_values: ser not of type Serial")
-	# for motor in motors:
-		# pow = motors[motor].power;
-		# dir = b'1' if pow > 0 else b'0';
-		# ser.write(motors[motor].pow_header + bytes([abs(pow)] * 2));
-		# ser.write(motors[motor].dir_header + dir * 2);
+	if not isinstance(ser, Serial):
+		raise ValueError("write_motor_values: ser not of type Serial")
+	for motor in motors:
+		pow = motors[motor].power;
+		dir = b'1' if pow > 0 else b'0';
+		ser.write(motors[motor].pow_header + bytes([abs(pow)] * 2));
+		ser.write(motors[motor].dir_header + dir * 2);
 
 
 
@@ -202,50 +214,28 @@ def get_rise_power(n, control):
 
 
 
-# def update_joy_values(joystick, control):
-	# control.trans_x = joystick.get_axis(0);
-	# control.trans_y = -1 * joystick.get_axis(1);
-	# control.rise = -1 * joystick.get_axis(3);
-	# control.yaw = joystick.get_axis(4);
+def update_joy_values(joystick, control):
+	control.trans_x = joystick.get_axis(0);
+	control.trans_y = -1 * joystick.get_axis(1);
+	control.rise = -1 * joystick.get_axis(3);
+	control.yaw = joystick.get_axis(4);
 
-# def process_joy_events():
-	# for event in pygame.event.get():
-		# if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 1:
-			# control.tare();
+def process_joy_events():
+	for event in pygame.event.get():
+		if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 1:
+			control.tare();
 
-
-
-
-
-
-
-ser = None;
-control = Control();
-
-motors = {MOTOR.FR_LF: Motor(MOTOR.FR_LF, b'1', b'a'),
-		  MOTOR.FR_RT: Motor(MOTOR.FR_RT, b'2', b'b'),
-		  MOTOR.BA_RT: Motor(MOTOR.BA_RT, b'3', b'c'),
-		  MOTOR.BA_LF: Motor(MOTOR.BA_LF, b'4', b'd'),
-		  MOTOR.FR_VT: Motor(MOTOR.FR_VT, b'5', b'e'),
-		  MOTOR.BA_VT: Motor(MOTOR.BA_VT, b'6', b'f')};
-
-# range 0 to 255
-# pressure, humidity, temperature, current
-sensor_values = {b'P': 0, b'H': 0, b'T': 0, b'C': 0};
-
-
-
-# def joy_init():
-	# """Initializes pygame and the joystick, and returns the joystick to be
-	# used."""
+def joy_init():
+	"""Initializes pygame and the joystick, and returns the joystick to be
+	used."""
 	
-	# pygame.init();
-	# pygame.joystick.init();
-	# if pygame.joystick.get_count() == 0:
-		# raise Exception("joy_init: No joysticks connected");
-	# joystick = pygame.joystick.Joystick(0);
-	# joystick.init();
-	# return joystick;
+	pygame.init();
+	pygame.joystick.init();
+	if pygame.joystick.get_count() == 0:
+		raise Exception("joy_init: No joysticks connected");
+	joystick = pygame.joystick.Joystick(0);
+	joystick.init();
+	return joystick;
 
 
 def onexit():
@@ -266,19 +256,19 @@ val = 0
 def mainDrive():
 	global control;
 	
-	# joystick = joy_init();
-	# ser = connect("COM3");
+	joystick = joy_init();
+	ser = connect("COM3");
 	
-	# update_joy_values(joystick, control);
-	# update_motor_values(control);
+	update_joy_values(joystick, control);
+	update_motor_values(control);
 	
 	# sets the motor values to the sliders
-	motors[MOTOR.FR_LF].power = gui.frontLeft * 2.5 - 127
-	motors[MOTOR.FR_RT].power = gui.frontRight * 2.5 - 127
-	motors[MOTOR.BA_LF].power = gui.backLeft * 2.5 - 127 
-	motors[MOTOR.BA_RT].power = gui.backRight * 2.5 - 127 
-	motors[MOTOR.FR_VT].power = gui.frontVert * 2.5 - 127
-	motors[MOTOR.BA_VT].power = gui.backVert * 2.5 - 127
+	motors[MOTOR.FR_LF].power = gui.frontLeft * 1.25
+	motors[MOTOR.FR_RT].power = gui.frontRight * 1.25
+	motors[MOTOR.BA_LF].power = gui.backLeft * 1.25 
+	motors[MOTOR.BA_RT].power = gui.backRight * 1.25
+	motors[MOTOR.FR_VT].power = gui.frontVert * 1.25
+	motors[MOTOR.BA_VT].power = gui.backVert * 1.25
 	
 	gui.drawMotorStatus(motors)
 	gui.estopControl()
@@ -289,29 +279,29 @@ def mainDrive():
 	if (val > 255):
 		val = 0
 	
+	# set sensor values here and the gui will be updated
 	gui.pressureValue = val
 	gui.masterCurrentValue = val
+	gui.ROVconnect = "connected"
+	gui.controllerConnect = "connected"
 	
-	# try:
-		# write_motor_values(ser);
-	# except SerialTimeoutException:
-		# print("write timeout");
+	try:
+		write_motor_values(ser);
+	except SerialTimeoutException:
+		print("write timeout");
 	
-	# read_data_values(ser, sensor_values);
-	# #print_data_values(sensor_values);
+	read_data_values(ser, sensor_values);
+	print_data_values(sensor_values);
 	
-	# process_joy_events();
+	process_joy_events();
 	
 	gui.after(1, mainDrive) # loops the mainDrive method
 	
-
-
-# atexit.register(onexit);
-
-
-
+# Start gui and call mainDrive loop
 gui = OrcusGUI()		
-gui.master.geometry("700x625")			   
+gui.master.geometry("812x800") # make sure all widgets start inside			   
+gui.master.minsize(812, 800)
+gui.master.maxsize(812, 800)
 gui.master.title('ROV ORCUS')  
 gui.after(1, mainDrive)
 gui.mainloop()   
