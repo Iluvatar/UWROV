@@ -5,6 +5,7 @@ import math
 # from enum import Enum;
 from serial import Serial, SerialException, SerialTimeoutException;
 from time import sleep;
+from pprint import pprint;
 from OrcusGUI import OrcusGUI
 from MOTOR import MOTOR
 # NOTE: this is not fully functional yet. As in, it still doesn't work properly.
@@ -42,9 +43,11 @@ class Motor:
 	# FR_VT = 5; # front vertical
 	# BA_VT = 6; # back vertical
 
+    # values in range [0, 1]
 class Control:
 	def __init__(self, trans_x = 0, trans_y = 0, yaw = 0, rise = 0,
-				 trans_x_tare = 0, trans_y_tare = 0, yaw_tare = 0, rise_tare = 0):
+				 trans_x_tare = 0, trans_y_tare = 0, yaw_tare = 0, rise_tare = 0,
+                 rise_control = 0):
 		self.trans_x = trans_x;
 		self.trans_y = trans_y;
 		self.yaw = yaw;
@@ -53,6 +56,7 @@ class Control:
 		self.trans_y_tare = trans_y_tare;
 		self.yaw_tare = yaw_tare;
 		self.rise_tare = rise_tare;
+		self.rise_control = rise_control;
 
 	def tare(self):
 		self.trans_x_tare = self.trans_x;
@@ -70,7 +74,7 @@ class Control:
 		return self.yaw - self.yaw_tare;
 
 	def rise_value(self):
-		return self.rise - self.rise_tare;
+		return self.rise - self.rise_tare + self.rise_control;
 
 ser = None;
 control = Control();
@@ -131,11 +135,12 @@ def write_motor_values(ser):
 	global motors;
 
 	if not isinstance(ser, Serial):
-		raise ValueError("write_motor_values: ser not of type Serial")
+		raise ValueError("write_motor_values: ser not of type Serial, of type",
+                         type(ser));
 	for motor in motors:
 		pow = motors[motor].power;
 		dir = b'1' if pow > 0 else b'0';
-		ser.write(motors[motor].pow_header + bytes([abs(pow)] * 2));
+		ser.write(motors[motor].pow_header + bytes([int(abs(pow))] * 2));
 		ser.write(motors[motor].dir_header + dir * 2);
 
 
@@ -164,21 +169,33 @@ def get_motor_power(n, control):
 
 
 def get_trans_power(n, control):
-	"""Takes the motor number and returns the power it should output for
-	translational motion, from -1 to 1.
-	
-	Raises a ValueError if the motor number is unrecognized."""
-
-	# these motors don't have an effect on translational speed
-	if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
-		return 0;
-	if n == MOTOR.FR_LF or n == MOTOR.BA_RT:
-		# TODO implement
-		return -1 * control.trans_y_value();
-	if n == MOTOR.FR_RT or n == MOTOR.BA_LF:
-		# TODO implement
-		return control.trans_y_value();
-	raise ValueError("get_trans_power: Illegal motor number");
+    """Takes the motor number and returns the power it should output for
+    translational motion, from -1 to 1.
+    
+    Raises a ValueError if the motor number is unrecognized."""
+    
+    # these motors don't have an effect on translational speed
+    if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
+        return 0;
+        
+    x = control.trans_x_value();
+    y = control.trans_y_value();
+    if x == 0 and y == 0:
+        return 0;
+    
+    m1 = .5 * x + y / (2 * math.sqrt(3));
+    m2 = -.5 * x + y / (2 * math.sqrt(3));
+    m1_norm = m1 / abs(max(m1, m2)) * min(math.hypot(x, y), 1);
+    m2_norm = m2 / abs(max(m1, m2)) *  min(math.hypot(x, y), 1);
+    if n == MOTOR.FR_LF:
+        return -1 * m1_norm;
+    if n == MOTOR.FR_RT:
+        return -1 * m2_norm;
+    if n == MOTOR.BA_RT:
+        return m1_norm;
+    if n == MOTOR.BA_LF:
+        return m2_norm;
+    raise ValueError("get_trans_power: Illegal motor number");
 
 
 def get_yaw_power(n, control):
@@ -191,9 +208,9 @@ def get_yaw_power(n, control):
 	if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
 		return 0;
 	if n == MOTOR.FR_LF or n == MOTOR.BA_RT:
-		return control.yaw_value();
+		return -1 *  control.yaw_value();
 	if n == MOTOR.FR_RT or n == MOTOR.BA_LF:
-		return -1 * control.yaw_value();
+		return control.yaw_value();
 	raise ValueError("get_yaw_power: Illegal motor number");
 
 
@@ -217,13 +234,19 @@ def get_rise_power(n, control):
 def update_joy_values(joystick, control):
 	control.trans_x = joystick.get_axis(0);
 	control.trans_y = -1 * joystick.get_axis(1);
-	control.rise = -1 * joystick.get_axis(3);
+	control.rise = -1 * joystick.get_axis(2);
 	control.yaw = joystick.get_axis(4);
 
 def process_joy_events():
-	for event in pygame.event.get():
-		if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 1:
-			control.tare();
+    for event in pygame.event.get():
+        if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 1:
+            control.tare();
+        if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 0:
+            if control.rise_control > -1:
+                control.rise_control -= .05;
+        if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 3:
+            if control.rise_control < 1:
+                control.rise_control += .05;
 
 def joy_init():
 	"""Initializes pygame and the joystick, and returns the joystick to be
@@ -254,21 +277,17 @@ def print_data_values(data_values):
 val = 0
 
 def mainDrive():
-	global control;
-
-	joystick = joy_init();
-	ser = connect("COM3");
 
 	update_joy_values(joystick, control);
 	update_motor_values(control);
 
 	# sets the motor values to the sliders
-	motors[MOTOR.FR_LF].power = gui.frontLeft * 1.25
-	motors[MOTOR.FR_RT].power = gui.frontRight * 1.25
-	motors[MOTOR.BA_LF].power = gui.backLeft * 1.25 
-	motors[MOTOR.BA_RT].power = gui.backRight * 1.25
-	motors[MOTOR.FR_VT].power = gui.frontVert * 1.25
-	motors[MOTOR.BA_VT].power = gui.backVert * 1.25
+	# motors[MOTOR.FR_LF].power = gui.frontLeft * 1.25
+	# motors[MOTOR.FR_RT].power = gui.frontRight * 1.25
+	# motors[MOTOR.BA_LF].power = gui.backLeft * 1.25 
+	# motors[MOTOR.BA_RT].power = gui.backRight * 1.25
+	# motors[MOTOR.FR_VT].power = gui.frontVert * 1.25
+	# motors[MOTOR.BA_VT].power = gui.backVert * 1.25
 
 	gui.drawMotorStatus(motors)
 	gui.estopControl()
@@ -299,9 +318,11 @@ def mainDrive():
 
 # Start gui and call mainDrive loop
 gui = OrcusGUI()		
-gui.master.geometry("812x800") # make sure all widgets start inside			   
+gui.master.geometry("812x800") # make sure all widgets start inside
 gui.master.minsize(812, 800)
 gui.master.maxsize(812, 800)
-gui.master.title('ROV ORCUS')  
+gui.master.title('ROV ORCUS')
+joystick = joy_init();
+ser = connect("COM3");
 gui.after(1, mainDrive)
-gui.mainloop()   
+gui.mainloop()

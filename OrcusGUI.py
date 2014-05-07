@@ -1,5 +1,5 @@
-import Tkinter as tk	
-import tkFont
+import tkinter as tk	
+#import tkFont
 from time import sleep;
 from MOTOR import MOTOR
 
@@ -63,10 +63,12 @@ class OrcusGUI(tk.Frame):
 		self.banner.grid(row=0, column=0, columnspan=2)
 	
 	# Draws banner from text
-	def textBanner(self):
+	"""
+    def textBanner(self):
 		self.bannerFont = tkFont.Font(family='Calibri', size=20, weight='bold')
 		self.banner = tk.Label(self, text='University of Washington Underwater Robotics Club\nUWROV', font = self.bannerFont, background='#883199')
 		self.banner.grid(row=0, column=0, columnspan=3)
+    """
 	
 	# Motor control slider callbacks
 	def frontLeftMotorValue(self, value = 0):
@@ -163,8 +165,8 @@ class OrcusGUI(tk.Frame):
 		
 	# Creates eStop button
 	def estopButton(self):
-		self.estopFont = tkFont.Font(family='Calibri', size=20, weight='bold')
-		self.estop = tk.Button(self, text='ESTOP', font=self.estopFont, command=self.estopCallback, background='red', width=7, padx=20, pady=20)
+		#self.estopFont = tkFont.Font(family='Calibri', size=20, weight='bold')
+		self.estop = tk.Button(self, text='ESTOP', command=self.estopCallback, background='red', width=7, padx=20, pady=20)
 		self.estop.grid(row=3, column=1)
 	
 	# Displays sensor readings
