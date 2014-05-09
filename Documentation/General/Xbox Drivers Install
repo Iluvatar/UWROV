@@ -1,0 +1,26 @@
+How to install the wireless Xbox controllers for Windows.
+
+http://support.xbox.com/en-US/xbox-on-other-devices/windows/xbox-controller-for-windows-setup
+
+Downloading Drivers
+1. Go to http://www.microsoft.com/hardware/en-us/downloads and click on
+   'Gaming' > 'Xbox 360 Wireless Controller for Windows'
+2. Download the correct drivers for your system
+3. Run the downloaded installer
+
+
+http://forums.xbox.com/xbox_forums/general_discussion/f/2196/t/135362.aspx
+7th post
+
+Using the Drivers
+1. Go to Device Manager
+2. Double click on 'Other devices' > 'Unknown device'
+3. Click the 'Driver' tab
+4. Click 'Update Driver...'
+5. Choose 'Browse my computer for driver software'
+6. Choose 'Let me pick from a list of device drivers on my computer'
+7. Choose 'Microsoft Common Controller for Windows Class'
+8. Choose 'Xbox 360 Wireless Receiver for Windows'
+9. Ignore the warning and proceed anyway
+10. ???
+11. Profit
