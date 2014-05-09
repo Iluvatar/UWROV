@@ -208,9 +208,9 @@ def get_yaw_power(n, control):
     if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
         return 0;
     if n == MOTOR.FR_LF or n == MOTOR.BA_RT:
-        return -1 *  control.yaw_value();
+        return -.4 *  control.yaw_value();
     if n == MOTOR.FR_RT or n == MOTOR.BA_LF:
-        return control.yaw_value();
+        return .4 * control.yaw_value();
     raise ValueError("get_yaw_power: Illegal motor number");
 
 
