@@ -284,7 +284,7 @@ def main():
         try:
             write_motor_values(ser)
         except SerialTimeoutException:
-         print "write timeout"
+            print "write timeout"
 
         read_data_values(ser, sensor_values)
         print_data_values(sensor_values)
