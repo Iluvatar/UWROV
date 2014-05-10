@@ -11,17 +11,17 @@ from pprint import pprint
 """
       Front
 
- FR_LF     FR_RT
+ FT_LT     FT_RT
    /---------\
   /|         |\
-   |  FR_VT  |
+   |  FT_VL  |
    |    o    |
    |         |
    |    o    |
-   |  BA_VT  |
+   |  BK_VL  |
   \|         |/
    \---------/
- BA_LF     BA_RT
+ BK_LT     BK_RT
 
 """
 
@@ -33,12 +33,12 @@ class Motor:
         self.power = power
 
 class MOTOR:
-    FR_LF = 1 # front left
-    FR_RT = 2 # front right
-    BA_RT = 3 # back right
-    BA_LF = 4 # back left
-    FR_VT = 5 # front vertical
-    BA_VT = 6 # back vertical
+    FT_LT = 1 # front left
+    FT_RT = 2 # front right
+    BK_RT = 3 # back right
+    BK_LT = 4 # back left
+    FT_VL = 5 # front vertical
+    BK_VL = 6 # back vertical
 
 # values in range [0, 1]
 class Control:
@@ -76,12 +76,12 @@ class Control:
 ser = None
 control = Control()
 
-motors = {MOTOR.FR_LF: Motor(MOTOR.FR_LF, b'1', b'a'),
-          MOTOR.FR_RT: Motor(MOTOR.FR_RT, b'2', b'b'),
-          MOTOR.BA_RT: Motor(MOTOR.BA_RT, b'3', b'c'),
-          MOTOR.BA_LF: Motor(MOTOR.BA_LF, b'4', b'd'),
-          MOTOR.FR_VT: Motor(MOTOR.FR_VT, b'5', b'e'),
-          MOTOR.BA_VT: Motor(MOTOR.BA_VT, b'6', b'f')}
+motors = {MOTOR.FT_LT: Motor(MOTOR.FT_LT, b'1', b'a'),
+          MOTOR.FT_RT: Motor(MOTOR.FT_RT, b'2', b'b'),
+          MOTOR.BK_RT: Motor(MOTOR.BK_RT, b'3', b'c'),
+          MOTOR.BK_LT: Motor(MOTOR.BK_LT, b'4', b'd'),
+          MOTOR.FT_VL: Motor(MOTOR.FT_VL, b'5', b'e'),
+          MOTOR.BK_VL: Motor(MOTOR.BK_VL, b'6', b'f')}
 
 # range 0 to 255
 # pressure, humidity, temperature, current
@@ -172,7 +172,7 @@ def get_trans_power(n, control):
     Raises a ValueError if the motor number is unrecognized."""
     
     # these motors don't have an effect on translational speed
-    if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
+    if n == MOTOR.FT_VL or n == MOTOR.BK_VL:
         return 0
         
     x = control.trans_x_value()
@@ -184,13 +184,13 @@ def get_trans_power(n, control):
     m2 = -.5 * x + y / (2 * math.sqrt(3))
     m1_norm = m1 / abs(max(m1, m2)) * min(math.hypot(x, y), 1)
     m2_norm = m2 / abs(max(m1, m2)) *  min(math.hypot(x, y), 1)
-    if n == MOTOR.FR_LF:
+    if n == MOTOR.FT_LT:
         return -1 * m1_norm
-    if n == MOTOR.FR_RT:
+    if n == MOTOR.FT_RT:
         return -1 * m2_norm
-    if n == MOTOR.BA_RT:
+    if n == MOTOR.BK_RT:
         return m1_norm
-    if n == MOTOR.BA_LF:
+    if n == MOTOR.BK_LT:
         return m2_norm
     raise ValueError("get_trans_power: Illegal motor number")
 
@@ -202,11 +202,11 @@ def get_yaw_power(n, control):
     Raises a ValueError if the motor number is unrecognized."""
 
     # these motors don't have an effect on translational speed
-    if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
+    if n == MOTOR.FT_VL or n == MOTOR.BK_VL:
         return 0
-    if n == MOTOR.FR_LF or n == MOTOR.BA_RT:
+    if n == MOTOR.FT_LT or n == MOTOR.BK_RT:
         return -.4 * control.yaw_value()
-    if n == MOTOR.FR_RT or n == MOTOR.BA_LF:
+    if n == MOTOR.FT_RT or n == MOTOR.BK_LT:
         return .4 * control.yaw_value()
     raise ValueError("get_yaw_power: Illegal motor number")
 
@@ -218,10 +218,10 @@ def get_rise_power(n, control):
     Raises a ValueError if the motor number is unrecognized."""
 
     # these motors don't have an effect on translational speed
-    if n == MOTOR.FR_LF or n == MOTOR.BA_RT or \
-       n == MOTOR.FR_RT or n == MOTOR.BA_LF:
+    if n == MOTOR.FT_LT or n == MOTOR.BK_RT or \
+       n == MOTOR.FT_RT or n == MOTOR.BK_LT:
         return 0
-    if n == MOTOR.FR_VT or n == MOTOR.BA_VT:
+    if n == MOTOR.FT_VL or n == MOTOR.BK_VL:
         return control.rise_value()
     raise ValueError("get_rise_power: Illegal motor number")
 
