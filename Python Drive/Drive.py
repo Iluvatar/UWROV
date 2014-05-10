@@ -94,7 +94,7 @@ def connect(port_name):
     try:
         return Serial(port_name, timeout = .5, writeTimeout = .5)
     except SerialException:
-        print("connect: could not connect to port " + port_name)
+        print "connect: could not connect to port", port_name
         return None
 
 
@@ -161,7 +161,7 @@ def get_motor_power(n, control):
     try:
         return min(scaled_power, 255) if scaled_power > 0 else max(scaled_power, -255)
     except ValueError as bad_motor:
-        print(bad_motor.args[0])
+        print bad_motor.args[0]
         return 0
 
 
@@ -273,7 +273,6 @@ def print_data_values(data_values):
 
 
 
-
 def main():
     joystick = joy_init()
     ser = connect("COM3")
@@ -285,7 +284,7 @@ def main():
         try:
             write_motor_values(ser)
         except SerialTimeoutException:
-         print("write timeout")
+         print "write timeout"
 
         read_data_values(ser, sensor_values)
         print_data_values(sensor_values)
