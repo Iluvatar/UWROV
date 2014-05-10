@@ -257,6 +257,9 @@ def joy_init():
         raise Exception("joy_init: No joysticks connected");
     joystick = pygame.joystick.Joystick(0);
     joystick.init();
+    
+    control.tare();
+    
     return joystick;
 
 
