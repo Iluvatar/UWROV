@@ -1,4 +1,5 @@
 # NOTE: this is not fully functional yet. As in, it still doesn't work properly.
+# This is the dev version.
 
 import serial, math, pygame;
 import math
