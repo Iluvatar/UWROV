@@ -8,7 +8,6 @@ from time import sleep;
 from pprint import pprint;
 from OrcusGUI import OrcusGUI
 from MOTOR import MOTOR
-# NOTE: this is not fully functional yet. As in, it still doesn't work properly.
 
 
 """
