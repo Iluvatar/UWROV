@@ -4,7 +4,6 @@
 
 import math, pygame, serial
 from serial import Serial, SerialException, SerialTimeoutException
-from time import sleep
 from pprint import pprint
 
 
@@ -25,12 +24,18 @@ from pprint import pprint
 
 """
 
+
+
+################################################################################
+# CLASS DEFINITIONS                                                            #
+################################################################################
+
 class Motor:
-    def __init__(self, ID, pow_header, dir_header, power = 0):
+    def __init__(self, ID, pow_header, dir_header):
         self.ID = ID
         self.pow_header = pow_header
         self.dir_header = dir_header
-        self.power = power
+        self.power = 0
 
 class MOTOR:
     FT_LT = 1 # front left
@@ -40,20 +45,19 @@ class MOTOR:
     FT_VL = 5 # front vertical
     BK_VL = 6 # back vertical
 
+
 # values in range [0, 1]
 class Control:
-    def __init__(self, trans_x = 0, trans_y = 0, yaw = 0, rise = 0,
-                 trans_x_tare = 0, trans_y_tare = 0, yaw_tare = 0, rise_tare = 0,
-                 rise_control = 0):
-        self.trans_x = trans_x
-        self.trans_y = trans_y
-        self.yaw = yaw
-        self.rise = rise
-        self.trans_x_tare = trans_x_tare
-        self.trans_y_tare = trans_y_tare
-        self.yaw_tare = yaw_tare
-        self.rise_tare = rise_tare
-        self.rise_control = rise_control
+    def __init__(self):
+        self.trans_x = 0
+        self.trans_y = 0
+        self.yaw = 0
+        self.rise = 0
+        self.trans_x_tare = 0
+        self.trans_y_tare = 0
+        self.yaw_tare = 0
+        self.rise_tare = 0
+        self.rise_control = 0
 
     def tare(self):
         self.trans_x_tare = self.trans_x
@@ -73,19 +77,11 @@ class Control:
     def rise_value(self):
         return self.rise - self.rise_tare + self.rise_control
 
-ser = None
-control = Control()
 
-motors = {MOTOR.FT_LT: Motor(MOTOR.FT_LT, b'1', b'a'),
-          MOTOR.FT_RT: Motor(MOTOR.FT_RT, b'2', b'b'),
-          MOTOR.BK_RT: Motor(MOTOR.BK_RT, b'3', b'c'),
-          MOTOR.BK_LT: Motor(MOTOR.BK_LT, b'4', b'd'),
-          MOTOR.FT_VL: Motor(MOTOR.FT_VL, b'5', b'e'),
-          MOTOR.BK_VL: Motor(MOTOR.BK_VL, b'6', b'f')}
 
-# range 0 to 255
-# pressure, humidity, temperature, current
-sensor_values = {b'P': 0, b'H': 0, b'T': 0, b'C': 0}
+################################################################################
+# DATA TRANSFER                                                                #
+################################################################################
 
 def connect(port_name):
     """Returns a Serial object that is connected to the port_name. Returns
@@ -97,6 +93,10 @@ def connect(port_name):
         print "connect: could not connect to port", port_name
         return None
 
+def is_connected():
+    """Returns whether we are currently connected to a serial port."""
+    
+    return ser != None
 
 def read_data_values(ser, data_values):
     """Reads data from ser and updates the dict data_values.
@@ -122,34 +122,31 @@ def read_data_values(ser, data_values):
     if read_chars > 12:
         ser.flushInput()
 
-
 def write_motor_values(ser):
     """Writes the motor power and direction to the serial port.
     
     Each write consists of a header followed by the value repeated twice."""
 
-    # do something about this
-    global motors
-
     if not isinstance(ser, Serial):
         raise ValueError("write_motor_values: ser not of type Serial, of type",
                          type(ser))
-    for motor in motors:
-        pow = motors[motor].power
+    for m_num in motors:
+        pow = motors[m_num].power
         dir = b'1' if pow > 0 else b'0'
-        ser.write(motors[motor].pow_header + bytes([int(abs(pow))] * 2))
-        ser.write(motors[motor].dir_header + dir * 2)
+        ser.write(motors[m_num].pow_header + bytes([int(abs(pow))] * 2))
+        ser.write(motors[m_num].dir_header + dir * 2)
 
 
 
-
+################################################################################
+# MOTOR CONTROL                                                                #
+################################################################################
 
 def update_motor_values(control):
     # do something about this
-    global motors
-
-    for motor in motors:
-        motors[motor].power = get_motor_power(motor, control)
+    
+    for m_num in motors:
+        motors[m_num].power = get_motor_power(m_num, control)
 
 def get_motor_power(n, control):
     """Takes the motor number and returns the magnitude of the total power it
@@ -163,7 +160,6 @@ def get_motor_power(n, control):
     except ValueError as bad_motor:
         print bad_motor.args[0]
         return 0
-
 
 def get_trans_power(n, control):
     """Takes the motor number and returns the power it should output for
@@ -194,22 +190,20 @@ def get_trans_power(n, control):
         return m2_norm
     raise ValueError("get_trans_power: Illegal motor number")
 
-
 def get_yaw_power(n, control):
     """Takes the motor number and returns the power it should output for
     rotational motion, from -1 to 1.
     
     Raises a ValueError if the motor number is unrecognized."""
 
-    # these motors don't have an effect on translational speed
+    # these motors don't have an effect on rotational speed
     if n == MOTOR.FT_VL or n == MOTOR.BK_VL:
         return 0
     if n == MOTOR.FT_LT or n == MOTOR.BK_RT:
-        return -.4 * control.yaw_value()
+        return -.6 * control.yaw_value()
     if n == MOTOR.FT_RT or n == MOTOR.BK_LT:
-        return .4 * control.yaw_value()
+        return .6 * control.yaw_value()
     raise ValueError("get_yaw_power: Illegal motor number")
-
 
 def get_rise_power(n, control):
     """Takes the motor number and returns the power it should output for
@@ -217,7 +211,7 @@ def get_rise_power(n, control):
     
     Raises a ValueError if the motor number is unrecognized."""
 
-    # these motors don't have an effect on translational speed
+    # these motors don't have an effect on vertical speed
     if n == MOTOR.FT_LT or n == MOTOR.BK_RT or \
        n == MOTOR.FT_RT or n == MOTOR.BK_LT:
         return 0
@@ -227,68 +221,43 @@ def get_rise_power(n, control):
 
 
 
+def init():
+    global ser
+    
+    try:
+        ser = connect("COM3")
+    except OSError:
+        print "Could not find serial port"
+    
+    if ser == None:
+        print "Could not connect to serial port"
 
-def update_joy_values(joystick, control):
-    control.trans_x = joystick.get_axis(0)
-    control.trans_y = -1 * joystick.get_axis(1)
-    control.rise = -1 * joystick.get_axis(2)
-    control.yaw = joystick.get_axis(4)
+def tick():
+    if ser == None:
+        print "Not connected to port"
+        return
+    
+    try:
+        write_motor_values(ser)
+    except SerialTimeoutException:
+        print "Serial write timeout"
 
-def process_joy_events():
-    for event in pygame.event.get():
-        if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 1:
-            control.tare()
-        if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 0:
-            if control.rise_control > -1:
-                control.rise_control -= .05
-        if event.type == pygame.JOYBUTTONDOWN and event.__dict__["button"] == 3:
-            if control.rise_control < 1:
-                control.rise_control += .05
-
-def joy_init():
-    """Initializes pygame and the joystick, and returns the joystick to be
-    used."""
-
-    pygame.init()
-    pygame.joystick.init()
-    if pygame.joystick.get_count() == 0:
-        raise Exception("joy_init: No joysticks connected")
-    joystick = pygame.joystick.Joystick(0)
-    joystick.init()
-    return joystick
-
-
-def onexit():
-    control.trans_x, control.trans_y, control.yaw, control.rise = 0, 0, 0, 0
-    control.trans_x_tare, control.trans_y_tare = 0, 0
-    control.yaw_tare, control.rise_tare = 0, 0
-    update_motor_values()
-    write_motor_values(ser)
-
-
-def print_data_values(data_values):
-    if not isinstance(data_values, dict):
-        raise ValueError("print_data_values: data_values not of type dict")
-    pprint(data_values)
+    read_data_values(ser, sensor_values)
 
 
 
-def main():
-    joystick = joy_init()
-    ser = connect("COM3")
+################################################################################
+# GLOBAL VARIABLES :/                                                          #
+################################################################################
 
-    while True:
-        update_joy_values(joystick, control)
-        update_motor_values(control)
+# range 0 to 255 (pressure, humidity, temperature, current)
+sensor_values = {b'P': 0, b'H': 0, b'T': 0, b'C': 0}
 
-        try:
-            write_motor_values(ser)
-        except SerialTimeoutException:
-            print "write timeout"
-
-        read_data_values(ser, sensor_values)
-        print_data_values(sensor_values)
-
-        process_joy_events()
-
-main()
+motors = {MOTOR.FT_LT: Motor(MOTOR.FT_LT, b'1', b'a'),
+          MOTOR.FT_RT: Motor(MOTOR.FT_RT, b'2', b'b'),
+          MOTOR.BK_RT: Motor(MOTOR.BK_RT, b'3', b'c'),
+          MOTOR.BK_LT: Motor(MOTOR.BK_LT, b'4', b'd'),
+          MOTOR.FT_VL: Motor(MOTOR.FT_VL, b'5', b'e'),
+          MOTOR.BK_VL: Motor(MOTOR.BK_VL, b'6', b'f')}
+ser = None
+control = Control()
