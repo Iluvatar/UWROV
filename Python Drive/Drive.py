@@ -53,29 +53,29 @@ class Control:
         self.trans_y = 0
         self.yaw = 0
         self.rise = 0
-        self.trans_x_tare = 0
-        self.trans_y_tare = 0
-        self.yaw_tare = 0
-        self.rise_tare = 0
+        self._trans_x_tare = 0
+        self._trans_y_tare = 0
+        self._yaw_tare = 0
+        self._rise_tare = 0
         self.rise_control = 0
 
     def tare(self):
-        self.trans_x_tare = self.trans_x
-        self.trans_y_tare = self.trans_y
-        self.yaw_tare = self.yaw
-        self.rise_tare = self.rise
+        self._trans_x_tare = self.trans_x
+        self._trans_y_tare = self.trans_y
+        self._yaw_tare = self.yaw
+        self._rise_tare = self.rise
 
     def trans_x_value(self):
-        return self.trans_x - self.trans_x_tare
+        return self.trans_x - self._trans_x_tare
 
     def trans_y_value(self):
-        return self.trans_y - self.trans_y_tare
+        return self.trans_y - self._trans_y_tare
 
     def yaw_value(self):
-        return self.yaw - self.yaw_tare
+        return self.yaw - self._yaw_tare
 
     def rise_value(self):
-        return self.rise - self.rise_tare + self.rise_control
+        return self.rise - self._rise_tare + self.rise_control
 
 
 
@@ -98,38 +98,36 @@ def is_connected():
     
     return ser != None
 
-def read_data_values(ser, data_values):
-    """Reads data from ser and updates the dict data_values.
+def read_data_values():
+    """Reads data from ser and updates the dict sensor_values.
     
     The keys in data_values should be bytes that are the headers for sensor
     values. Attempts to find each key in the read data and then updates it if
     the next two bytes are consistent."""
-
-    if not isinstance(data_values, dict):
-        raise ValueError("read_data_values: data_values not of type dict")
-    if not isinstance(ser, Serial):
-        raise ValueError("read_data_values: ser not of type Serial")
+    
+    if not is_connected():
+        return
 
     # so we don't read too much data
-    read_chars = min(ser.inWaiting(), len(data_values) * 5)
+    read_chars = min(ser.inWaiting(), len(sensor_values) * 5)
     raw_data = ser.read(read_chars)
 
     for key in data_values.keys():
         pos = raw_data[:-1].rfind(key)
         if pos != -1:
-            data_values[key] = raw_data[pos + 1]
+            sensor_values[key] = raw_data[pos + 1]
 
     if read_chars > 12:
         ser.flushInput()
 
-def write_motor_values(ser):
+def write_motor_values():
     """Writes the motor power and direction to the serial port.
     
     Each write consists of a header followed by the value repeated twice."""
 
-    if not isinstance(ser, Serial):
-        raise ValueError("write_motor_values: ser not of type Serial, of type",
-                         type(ser))
+    if not is_connected():
+        return
+    
     for m_num in motors:
         pow = motors[m_num].power
         dir = b'1' if pow > 0 else b'0'
@@ -142,18 +140,15 @@ def write_motor_values(ser):
 # MOTOR CONTROL                                                                #
 ################################################################################
 
-def update_motor_values(control):
-    # do something about this
-    
+def update_motor_values():
     for m_num in motors:
-        motors[m_num].power = get_motor_power(m_num, control)
+        motors[m_num].power = get_motor_power(m_num)
 
-def get_motor_power(n, control):
+def get_motor_power(n):
     """Takes the motor number and returns the magnitude of the total power it
     should output, from -255 to 255. Returns 0 if an invalid motor is given."""
 
-    power_sum = get_trans_power(n, control) + get_yaw_power(n, control) + \
-                get_rise_power(n, control)
+    power_sum = get_trans_power(n) + get_yaw_power(n) +  get_rise_power(n)
     scaled_power = int(power_sum * 255)
     try:
         return min(scaled_power, 255) if scaled_power > 0 else max(scaled_power, -255)
@@ -161,7 +156,7 @@ def get_motor_power(n, control):
         print bad_motor.args[0]
         return 0
 
-def get_trans_power(n, control):
+def get_trans_power(n):
     """Takes the motor number and returns the power it should output for
     translational motion, from -1 to 1.
     
@@ -190,7 +185,7 @@ def get_trans_power(n, control):
         return m2_norm
     raise ValueError("get_trans_power: Illegal motor number")
 
-def get_yaw_power(n, control):
+def get_yaw_power(n):
     """Takes the motor number and returns the power it should output for
     rotational motion, from -1 to 1.
     
@@ -205,7 +200,7 @@ def get_yaw_power(n, control):
         return .6 * control.yaw_value()
     raise ValueError("get_yaw_power: Illegal motor number")
 
-def get_rise_power(n, control):
+def get_rise_power(n):
     """Takes the motor number and returns the power it should output for
     vertical motion, from -1 to 1.
     
@@ -221,7 +216,11 @@ def get_rise_power(n, control):
 
 
 
+
+
 def init():
+    """Initializes the connection to the ROV."""
+    
     global ser
     
     try:
@@ -233,16 +232,20 @@ def init():
         print "Could not connect to serial port"
 
 def tick():
-    if ser == None:
-        print "Not connected to port"
+    """Called to connect to the ROV. Updates the motor readings, sends values,
+    and reads sensors."""
+    
+    update_motor_values()
+    
+    if not is_connected():
         return
     
     try:
-        write_motor_values(ser)
+        write_motor_values()
     except SerialTimeoutException:
         print "Serial write timeout"
 
-    read_data_values(ser, sensor_values)
+    read_data_values(sensor_values)
 
 
 
