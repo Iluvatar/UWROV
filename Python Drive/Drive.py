@@ -112,10 +112,10 @@ def read_data_values():
     read_chars = min(ser.inWaiting(), len(sensor_values) * 5)
     raw_data = ser.read(read_chars)
 
-    for key in data_values.keys():
+    for key in sensor_values.keys():
         pos = raw_data[:-1].rfind(key)
         if pos != -1:
-            sensor_values[key] = raw_data[pos + 1]
+            sensor_values[key] = ord(raw_data[pos + 1])
 
     if read_chars > 12:
         ser.flushInput()
@@ -133,6 +133,7 @@ def write_motor_values():
         dir = b'1' if pow > 0 else b'0'
         ser.write(motors[m_num].pow_header + bytes([int(abs(pow))] * 2))
         ser.write(motors[m_num].dir_header + dir * 2)
+        print "power", int(abs(pow))
 
 
 
@@ -245,7 +246,7 @@ def tick():
     except SerialTimeoutException:
         print "Serial write timeout"
 
-    read_data_values(sensor_values)
+    read_data_values()
 
 
 
