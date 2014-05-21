@@ -136,21 +136,21 @@ class Button(pg.sprite.Sprite):
 
 
 class SensorReading(pg.sprite.Sprite):
-    def __init__(self, label, key, pos):
+    def __init__(self, label, key, func, pos):
         pg.sprite.Sprite.__init__(self)
         #self._background = pg.surface.Surface((100, 25), pg.SRCALPHA, 32)
         self._label = label
+        self._func = func
         self._key = key
         self._pos = pos
     
     def update(self):
         value = Drive.sensor_values[self._key]
         loc = string.find(self._label, "%r")
-        print_text = self._label[:loc] + str(value) + self._label[loc + 2:]
-        self.image = pg.font.Font(None, 22).render(print_text, True, gray)
+        text = self._label[:loc] + str(self._func(value)) + self._label[loc + 2:]
+        self.image = pg.font.Font(None, 22).render(text, True, gray)
         self.rect = self.image.get_rect()
         self.rect.topleft = self._pos
-        #self.image
 
 
 ################################################################################
@@ -244,10 +244,14 @@ def main():
                     True, black, pg.font.Font(None, 36), red, (200, 0, 0))
     buttons = pg.sprite.RenderPlain(e_stop)
     
-    pressure = SensorReading("Pressure: %r mbar", b'P', (25, 482))
-    humidity = SensorReading("Humidity: %r %", b'H', (25, 502))
-    temperature = SensorReading("Temperature: %r degrees", b'T', (25, 522))
-    current = SensorReading("Current: %r mA", b'C', (25, 542))
+    fun = lambda x: x
+    pressure = SensorReading("Pressure: %r mbar", b'P', fun, (25, 482))
+    humidity = SensorReading("Humidity: %r %", b'H',
+                             lambda x: 32 * x * 5 / 255 - 24, (25, 502))
+    temperature = SensorReading("Temperature: %r C", b'T',
+                                lambda x: 100 * x * 5 / 255 - 50, (25, 522))
+    current = SensorReading("Current: %r mA", b'C',
+                            lambda x: 5 * x * 5 / 255 - 12.5, (25, 542))
     sensors = pg.sprite.RenderPlain(pressure, humidity, temperature, current)
     
     while True:
