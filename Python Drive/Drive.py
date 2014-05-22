@@ -115,7 +115,7 @@ def read_data_values():
     for key in data_values.keys():
         pos = raw_data[:-1].rfind(key)
         if pos != -1:
-            sensor_values[key] = raw_data[pos + 1]
+            sensor_values[key] = ord(raw_data[pos + 1])
 
     if read_chars > 12:
         ser.flushInput()
