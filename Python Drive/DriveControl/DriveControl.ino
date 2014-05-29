@@ -146,7 +146,7 @@ void loop()
     {
         new_vals = Serial.available() >= 3 || SerialAlt.available() >= 3;
         
-        if (time % 100 == 0)
+        if (time % 50 == 0)
         {
             // always write sensors values, as some sensors are on this Arduino
             write_sensor_values();

@@ -139,6 +139,9 @@ class SensorReading(pg.sprite.Sprite):
     def __init__(self, label, key, func, pos):
         pg.sprite.Sprite.__init__(self)
         #self._background = pg.surface.Surface((100, 25), pg.SRCALPHA, 32)
+        
+        # the label should use format() syntax, so '{0}' where the value is to
+        # be printed
         self._label = label
         self._func = func
         self._key = key
@@ -146,8 +149,7 @@ class SensorReading(pg.sprite.Sprite):
     
     def update(self):
         value = Drive.sensor_values[self._key]
-        loc = string.find(self._label, "%r")
-        text = self._label[:loc] + str(self._func(value)) + self._label[loc + 2:]
+        text = self._label.format(self._func(value))
         self.image = pg.font.Font(None, 22).render(text, True, gray)
         self.rect = self.image.get_rect()
         self.rect.topleft = self._pos
@@ -157,22 +159,29 @@ class SensorReading(pg.sprite.Sprite):
 # JOYSTICK CONTROL                                                             #
 ################################################################################
 
+def connect_joy():
+    """Attempts to connect to a joystick and return it. Returns None if there
+    are no connected joysticks."""
+    
+    global use_joy
+    
+    if pg.joystick.get_count() == 0:
+        return None
+    joy = pg.joystick.Joystick(0)
+    joy.init()
+    use_joy = True
+    return joy
+
 def joy_init():
     """Initializes pygame and the joystick, and returns the joystick to be
     used."""
     
-    global use_joy
-    
     pg.init()
     pg.joystick.init()
-    if pg.joystick.get_count() == 0:
+    joy = connect_joy()
+    if joy == None:
         print "joy_init: No joysticks connected"
-        return
-    joystick = pg.joystick.Joystick(0)
-    joystick.init()
-    use_joy = True
-    return joystick
-
+    return joy
 
 
 ################################################################################
@@ -183,16 +192,15 @@ def update_control_values():
     """Master update for the control object."""
     
     if E_stop:
-        Drive.control.trans_x = 0
-        Drive.control.trans_y = 0
-        Drive.control.rise = 0
-        Drive.control.yaw = 0
+        Drive.control.e_stop = True
     elif use_joy:
+        Drive.control.e_stop = False
         Drive.control.trans_x = joystick.get_axis(X_axis)
         Drive.control.trans_y = -1 * joystick.get_axis(Y_axis)
         Drive.control.rise = -1 * joystick.get_axis(Z_axis)
         Drive.control.yaw = joystick.get_axis(4)
     else:
+        Drive.control.e_stop = False
         Drive.control.trans_x = float(pg.mouse.get_pos()[0]) / 400 - 1
         Drive.control.trans_y = 1 - float(pg.mouse.get_pos()[1]) / 400
 
@@ -244,13 +252,13 @@ def main():
                     True, black, pg.font.Font(None, 36), red, (200, 0, 0))
     buttons = pg.sprite.RenderPlain(e_stop)
     
-    fun = lambda x: x
-    pressure = SensorReading("Pressure: %r mbar", b'P', fun, (25, 482))
-    humidity = SensorReading("Humidity: %r %", b'H',
+    pressure = SensorReading("Depth: {0} m", b'P',
+                             lambda x: .4 * x - 16, (25, 482))
+    humidity = SensorReading("Humidity: {0} %", b'H',
                              lambda x: 32 * x * 5 / 255 - 24, (25, 502))
-    temperature = SensorReading("Temperature: %r C", b'T',
+    temperature = SensorReading("Temperature: {0} C", b'T',
                                 lambda x: 100 * x * 5 / 255 - 50, (25, 522))
-    current = SensorReading("Current: %r mA", b'C',
+    current = SensorReading("Current: {0} mA", b'C',
                             lambda x: 5 * x * 5 / 255 - 12.5, (25, 542))
     sensors = pg.sprite.RenderPlain(pressure, humidity, temperature, current)
     
@@ -278,6 +286,10 @@ def main():
         sensors.draw(screen)
         pg.display.flip()
         
+        # if a joystick isn't connected
+        if joystick == None:
+            joystick = connect_joy()
+        
         # look for buttons pressed, mouse clicks, etc.
         for event in pg.event.get():
             if event.type == pg.JOYBUTTONDOWN and \
@@ -303,11 +315,6 @@ def main():
                 e_stop.click()
             
             elif event.type == QUIT:
-                exit()
-            
-            # TODO REMOVE THIS - FOR TESTING PURPOSES ONLY (we don't want to
-            # quit if someone accidentally presses escape)
-            if event.type == KEYDOWN and event.key == K_ESCAPE:
                 exit()
 
 

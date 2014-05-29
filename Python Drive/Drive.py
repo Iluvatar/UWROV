@@ -58,6 +58,7 @@ class Control:
         self._yaw_tare = 0
         self._rise_tare = 0
         self.rise_control = 0
+        self.e_stop = False
 
     def tare(self):
         self._trans_x_tare = self.trans_x
@@ -66,16 +67,16 @@ class Control:
         self._rise_tare = self.rise
 
     def trans_x_value(self):
-        return self.trans_x - self._trans_x_tare
+        return 0 if self.e_stop else self.trans_x - self._trans_x_tare
 
     def trans_y_value(self):
-        return self.trans_y - self._trans_y_tare
+        return 0 if self.e_stop else self.trans_y - self._trans_y_tare
 
     def yaw_value(self):
-        return self.yaw - self._yaw_tare
+        return 0 if self.e_stop else self.yaw - self._yaw_tare
 
     def rise_value(self):
-        return self.rise - self._rise_tare + self.rise_control
+        return 0 if self.e_stop else self.rise - self._rise_tare + self.rise_control
 
 
 
@@ -253,9 +254,10 @@ def tick():
 # GLOBAL VARIABLES :/                                                          #
 ################################################################################
 
-# range 0 to 255 (pressure, humidity, temperature, current)
+# range [0, 255] (pressure, humidity, temperature, current)
 sensor_values = {b'P': 0, b'H': 0, b'T': 0, b'C': 0}
 
+# range [0, 255]
 motors = {MOTOR.FT_LT: Motor(MOTOR.FT_LT, b'1', b'a'),
           MOTOR.FT_RT: Motor(MOTOR.FT_RT, b'2', b'b'),
           MOTOR.BK_RT: Motor(MOTOR.BK_RT, b'3', b'c'),

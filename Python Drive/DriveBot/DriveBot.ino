@@ -174,13 +174,13 @@ void loop()
     // wait for enough data to arrive
     do
     {
-        // after about 5 seconds of lost communication, stop the motors
-        if (time > 5000)
+        // after about 1 second of lost communication, stop the motors
+        if (time > 1000)
         {
             reset_motors();
         }
         
-        // update value ever 50ms
+        // update value every 50ms
         if (time % 50 == 0)
         {
             update_motor_values();
