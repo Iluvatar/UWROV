@@ -134,6 +134,7 @@ def write_motor_values():
         dir = b'1' if pow > 0 else b'0'
         ser.write(motors[m_num].pow_header + bytes([int(abs(pow))] * 2))
         ser.write(motors[m_num].dir_header + dir * 2)
+        print "power", int(abs(pow))
 
 
 
