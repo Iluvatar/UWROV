@@ -113,7 +113,7 @@ def read_data_values():
     read_chars = min(ser.inWaiting(), len(sensor_values) * 5)
     raw_data = ser.read(read_chars)
 
-    for key in data_values.keys():
+    for key in sensor_values.keys():
         pos = raw_data[:-1].rfind(key)
         if pos != -1:
             sensor_values[key] = ord(raw_data[pos + 1])
@@ -246,7 +246,7 @@ def tick():
     except SerialTimeoutException:
         print "Serial write timeout"
 
-    read_data_values(sensor_values)
+    read_data_values()
 
 
 
