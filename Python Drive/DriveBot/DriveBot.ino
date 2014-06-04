@@ -168,6 +168,7 @@ void setup()
 
 // used for periodic tasks that aren't executed every loop
 int time = 0;
+int light_state = LOW;
 
 void loop()
 {
@@ -195,6 +196,15 @@ void loop()
     // read and update on the new data
     read_input_values();
     set_motor_values();
+    
+    // toggle light for visual feedback if we recieve data
+    if (light_state == LOW) {
+        digitalWrite(13, HIGH);
+        light_state = HIGH;
+    } else {
+        digitalWrite(13, LOW);
+        light_state = LOW;
+    }
     
     time = 0;
 }
